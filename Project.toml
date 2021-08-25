@@ -3,6 +3,9 @@ uuid = "c0c96f75-fb1e-4a0c-bd73-67714f26b91d"
 authors = ["Jack Shannon <j.b.shannon@lse.ac.uk> and contributors"]
 version = "0.1.0"
 
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+
 [compat]
 julia = "1"
 
