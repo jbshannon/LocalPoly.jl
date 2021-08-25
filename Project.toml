@@ -1,0 +1,13 @@
+name = "LocPolyReg"
+uuid = "c0c96f75-fb1e-4a0c-bd73-67714f26b91d"
+authors = ["Jack Shannon <j.b.shannon@lse.ac.uk> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
