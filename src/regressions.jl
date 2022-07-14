@@ -113,22 +113,23 @@ function lpreg(
     nbins::Int=0,
     kernel::Symbol=:Epanechnikov,
     h=plugin_bandwidth(x, y, ν, degree; kernel),
+    se=false,
 )
     𝐌 = LPModel(x, y; degree, nbins)
 
     # Get initial values
     β̂ = _lpreg!(𝐌, h, first(v); kernel)
-    V̂ = _lpvcov(𝐌)
+    se && (V̂ = _lpvcov(𝐌))
 
     # Construct vectors for results
     𝛃 = repeat([β̂], length(v))
-    𝐕 = repeat([V̂], length(v))
+    se && (𝐕 = repeat([V̂], length(v)))
 
     # Populate vectors for remaining regressions
     for i in Base.Iterators.drop(eachindex(v), 1)
         @inbounds 𝛃[i] = _lpreg!(𝐌, h, v[i]; kernel)
-        @inbounds 𝐕[i] = _lpvcov(𝐌)
+        se && (@inbounds 𝐕[i] = _lpvcov(𝐌))
     end
 
-    return 𝛃, 𝐕
+    return se ? (𝛃, 𝐕) : 𝛃
 end
