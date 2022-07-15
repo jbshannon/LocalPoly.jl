@@ -8,14 +8,18 @@ using Documenter, LocalPoly
 
 makedocs(;
     sitename="LocalPoly.jl",
+    modules=[LocalPoly],
     pages=[
         "Home" => "index.md",
         "API Reference" => "reference.md",
-    ]
+    ],
+    format=Documenter.HTML(;
+        prettyurls = get(ENV, "CI", "false") == "true",
+        highlights=["matlab", "stata"]
+    ),
 )
 
 deploydocs(
     repo="github.com/jbshannon/LocalPoly.jl.git",
-    versions = ["dev" => "main"],
     push_preview=true,
 )
