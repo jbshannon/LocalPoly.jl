@@ -78,7 +78,7 @@ function _update_weights!(w, x̂, c, h; kernel=:Epanechnikov)
     return w
 end
 
-function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, h, x₀; kernel=:Epanechnikov)
+function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=:Epanechnikov)
     _polybasis!(X, g, x₀)
     _update_weights!(w, x̂, c, h; kernel)
     mul!(WX, W, X)
@@ -88,9 +88,9 @@ function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, h, x₀; kernel=:Epanechni
     return SVector{length(β̂), eltype(β̂)}(β̂)
 end
 
-function _lpreg!(𝐌::LPModel, h, x₀; kernel=:Epanechnikov)
+function _lpreg!(𝐌::LPModel, x₀, h; kernel=:Epanechnikov)
     @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY = 𝐌
-    return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, h, x₀; kernel)
+    return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
 end
 
 function _lpvcov(x̂, WX, XWX)
@@ -108,15 +108,22 @@ end
 
 function lpreg(
     x::AbstractVector, y::AbstractVector, v::AbstractVector;
-    ν::Int=0,
     degree::Int=1,
-    nbins::Int=0,
+    nbins::Int=floor(Int, length(x)/100),
     kernel::Symbol=:Epanechnikov,
-    h=plugin_bandwidth(x, y, ν, degree; kernel),
+    h=plugin_bandwidth(x, y, degree-1, degree; kernel),
     se=false,
 )
     𝐌 = LPModel(x, y; degree, nbins)
+    return lpreg!(𝐌, v; kernel, h, se)
+end
 
+function lpreg!(
+    𝐌::LPModel, v::AbstractVector;
+    kernel::Symbol=:Epanechnikov,
+    h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel),
+    se=false,
+)
     # Get initial values
     β̂ = _lpreg!(𝐌, h, first(v); kernel)
     se && (V̂ = _lpvcov(𝐌))
@@ -127,7 +134,7 @@ function lpreg(
 
     # Populate vectors for remaining regressions
     for i in Base.Iterators.drop(eachindex(v), 1)
-        @inbounds 𝛃[i] = _lpreg!(𝐌, h, v[i]; kernel)
+        @inbounds 𝛃[i] = _lpreg!(𝐌, v[i], h; kernel)
         se && (@inbounds 𝐕[i] = _lpvcov(𝐌))
     end
 
