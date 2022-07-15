@@ -1,7 +1,8 @@
 # LocalPoly.jl
 
 [![Build Status](https://github.com/jbshannon/LocalPoly.jl/workflows/CI/badge.svg)](https://github.com/jbshannon/LocalPoly.jl/actions?query=workflows/CI)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://jbshannon.github.io/LocalPoly.jl/)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://jbshannon.github.io/LocalPoly.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://jbshannon.github.io/LocalPoly.jl/dev)
 
 `LocalPoly.jl` is a Julia implementation of the local polynomial regression methods outlined in [Fan and Gijbels (1996)](https://doi.org/10.1201/9780203748725). This package is still experimental, and the API is subject to change.
 
