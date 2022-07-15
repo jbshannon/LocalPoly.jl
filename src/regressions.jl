@@ -1,20 +1,39 @@
+"""
+$(TYPEDEF)
+
+---
+
+$(TYPEDFIELDS)
+"""
 struct LPModel{T <: Real}
     # Raw data
+    "Raw x data"
     x::AbstractVector{T}
+    "Raw y data"
     y::AbstractVector{T}
 
     # Binned data
+    "Binned x data"
     g::AbstractVector{T}
+    "Binned y data"
     Y::AbstractVector{T}
+    "Bin weights"
     c::AbstractVector{T}
 
     # Pre-allocated arrays for regressions
+    "Kernel weight vector"
     w::AbstractVector{T}
+    "x data centered at x₀"
     x̂::AbstractVector{T}
+    "Weighting matrix"
     W::Diagonal{T, Vector{T}}
+    "Polynomial basis design matrix, centered at x₀"
     X::Matrix{T}
+    "`W * X`"
     WX::Matrix{T}
+    "`WX' * X`"
     XWX::Matrix{T}
+    "`WX' * Y`"
     XWY::Vector{T}
 end
 
@@ -70,10 +89,10 @@ function _polybasis(x, x₀, degree)
 end
 
 function _update_weights!(w, x̂, c, h; kernel=:Epanechnikov)
-    K = KERNELS[kernel]
+    Kₕ(u) = KERNELS[kernel](u/h)/h
     copyto!(w, c)
     for i in eachindex(w, x̂)
-        w[i] *= h * K(x̂[i]/h)
+        w[i] *= Kₕ(x̂[i])
     end
     return w
 end
@@ -106,23 +125,26 @@ function _lpvcov(𝐌::LPModel)
     return _lpvcov(x̂, WX, XWX)
 end
 
-function lpreg(
-    x::AbstractVector, y::AbstractVector, v::AbstractVector;
-    degree::Int=1,
-    nbins::Int=floor(Int, length(x)/100),
-    kernel::Symbol=:Epanechnikov,
-    h=plugin_bandwidth(x, y, degree-1, degree; kernel),
-    se=false,
-)
-    𝐌 = LPModel(x, y; degree, nbins)
-    return lpreg!(𝐌, v; kernel, h, se)
-end
+"""
+Estimate the local polynomial regression model `𝐌` at the points in `v`.
 
+$(TYPEDSIGNATURES)
+
+## Arguments
+- `𝐌::LPModel`
+- `v::AbstractVector`
+
+## Keyword Arguments
+- `kernel::Symbol=:Epanechnikov` - kernel function
+- `h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel)` - bandwidth
+- `se::Bool=false` - flag for whether standard errors should be computed and returned
+"""
 function lpreg!(
-    𝐌::LPModel, v::AbstractVector;
+    𝐌::LPModel,
+    v::AbstractVector;
     kernel::Symbol=:Epanechnikov,
     h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel),
-    se=false,
+    se::Bool=false,
 )
     # Get initial values
     β̂ = _lpreg!(𝐌, h, first(v); kernel)
@@ -139,4 +161,35 @@ function lpreg!(
     end
 
     return se ? (𝛃, 𝐕) : 𝛃
+end
+
+"""
+Estimate the local polynomial regression of `y` on `x` at the points in `v`.
+
+$(TYPEDSIGNATURES)
+
+## Arguments
+- `x::AbstractVector`
+- `y::AbstractVector`
+- `v::AbstractVector`
+
+## Keyword Arguments
+- `degree::Int=1` - degree of the polynomial approximation
+- `nbins::Int=floor(Int, length(x)/100)` - number of bins to use (0 for no binning)
+- `kernel::Symbol=:Epanechnikov` - kernel function
+- `h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel)` - bandwidth
+- `se::Bool=false` - flag for whether standard errors should be computed and returned
+"""
+function lpreg(
+    x::AbstractVector,
+    y::AbstractVector,
+    v::AbstractVector;
+    degree::Int=1,
+    nbins::Int=floor(Int, length(x)/100),
+    kernel::Symbol=:Epanechnikov,
+    h=plugin_bandwidth(x, y, degree-1, degree; kernel),
+    se=false,
+)
+    𝐌 = LPModel(x, y, degree; nbins)
+    return lpreg!(𝐌, v; kernel, h, se)
 end

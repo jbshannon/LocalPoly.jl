@@ -5,11 +5,13 @@
 
     # Test that function value is well-approximated
     β̂ = lpreg(x, y, v; nbins=1000)
-    MSE = mean(map((b, x) -> abs2(b[1] - sin(x)), β̂, v))
-    @test MSE < 1.0 # what would a good threshold be?
+    I = findall(β -> !isnan(β[1]), β̂)
+    sqerr = map(i -> abs2(β̂[i][1] - sin(v[i])), I)
+    @test mean(sqerr) < 1.0 # what would a good threshold be?
 
     # Test that first derivative is well-approximated
-    β̂ = lpreg(x, y, v; ν=1, degree=2, nbins=1000)
-    MSE = mean(map((b, x) -> abs2(b[2] - cos(x)), β̂, v))
-    @test MSE < 1.0 # what would a good threshold be?
+    β̂ = lpreg(x, y, v; degree=2, nbins=1000)
+    I = findall(β -> !isnan(β[2]), β̂)
+    sqerr = map(i -> abs2(β̂[i][2] - cos(v[i])), I)
+    @test mean(sqerr) < 1.0 # what would a good threshold be?
 end

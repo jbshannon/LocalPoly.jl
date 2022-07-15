@@ -1,6 +1,14 @@
+"""
+$(README)
+
+---
+## Exports
+$(EXPORTS)
+"""
 module LocalPoly
 
 using Distributions
+using DocStringExtensions
 using LinearAlgebra
 using LoopVectorization
 using Parameters
@@ -11,7 +19,7 @@ import Polynomials
 import Base.show
 
 export LPModel
-export lpreg
+export lpreg!, lpreg
 export plugin_bandwidth
 
 include("binning.jl")

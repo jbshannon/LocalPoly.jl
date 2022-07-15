@@ -1,24 +1,10 @@
-name = "LocalPoly"
-uuid = "c0c96f75-fb1e-4a0c-bd73-67714f26b91d"
-authors = ["Jack Shannon <j.b.shannon@lse.ac.uk> and contributors"]
-version = "0.1.0"
-
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-
-[compat]
-julia = "1"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]

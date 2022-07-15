@@ -1,4 +1,19 @@
-"`Dict` containing supported kernel functions"
+"""
+`Dict` containing supported kernel functions"
+
+Currently available kernels:
+- `:Uniform`
+- `:Triangular`
+- `:Epanechnikov`
+- `:Quartic`
+- `:Triweight`
+- `:Tricube`
+- `:Gaussian`
+- `:Cosine`
+- `:Logistic`
+- `:Sigmoid`
+- `:Silverman`
+"""
 const KERNELS = Dict(
     :Uniform => u -> abs(u) <= 1 ? 0.5 : 0.0,
     :Triangular => u -> abs(u) <= 1 ? 1-abs(u) : 0.0,
@@ -42,7 +57,11 @@ const 𝐶 = Dict(
     (2, 3, :Triweight) => 3.503,
 )
 
-"Fan-Gijbels plugin bandwidth estimator"
+"""
+$(TYPEDSIGNATURES)
+
+Estimate the rule-of-thumb plugin bandwidth.
+"""
 function plugin_bandwidth(
     x::AbstractVector, y::AbstractVector, ν::Int, p::Int;
     kernel=:Epanechnikov
