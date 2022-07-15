@@ -13,3 +13,9 @@ makedocs(;
         "API Reference" => "reference.md",
     ]
 )
+
+deploydocs(
+    repo="github.com/jbshannon/LocalPoly.jl.git",
+    versions = ["stable" => "v^", "v#.#", "dev" => "master"],
+    push_preview=true,
+)
