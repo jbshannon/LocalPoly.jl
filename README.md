@@ -1,6 +1,7 @@
-# LocalPoly
+# LocalPoly.jl
 
 [![Build Status](https://github.com/jbshannon/LocalPoly.jl/workflows/CI/badge.svg)](https://github.com/jbshannon/LocalPoly.jl/actions?query=workflows/CI)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://jbshannon.github.io/LocalPoly.jl/)
 
 `LocalPoly.jl` is a Julia implementation of the local polynomial regression methods outlined in [Fan and Gijbels (1996)](https://doi.org/10.1201/9780203748725). This package is still experimental, and the API is subject to change.
 
@@ -111,7 +112,7 @@ current_figure()
 
 ## Performance
 
-Set the number of observations $N=100, \! 000$ and $Y_i = \sin(X_i) + \varepsilon_i$ for $X_i \in [0, 2\pi]$. Evaluate the local polynomial estimator at $1, \! 000$ points.
+Set the number of observations to 100,000 and $Y_i = \sin(X_i) + \varepsilon_i$ for $X_i \in [0, 2\pi]$. Evaluate the local polynomial estimator at 1,000 points.
 
 ```julia-repl
 julia> using BenchmarkTools, LocalPoly

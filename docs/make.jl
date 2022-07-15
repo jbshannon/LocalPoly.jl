@@ -16,6 +16,6 @@ makedocs(;
 
 deploydocs(
     repo="github.com/jbshannon/LocalPoly.jl.git",
-    versions = ["stable" => "v^", "v#.#", "dev" => "master"],
+    versions = ["dev" => "main"],
     push_preview=true,
 )
