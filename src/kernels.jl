@@ -9,7 +9,7 @@ const KERNELS = Dict(
     :Gaussian => u -> pdf(Normal(), u),
     :Cosine => u -> abs(u) <= 1 ? (π/4)*cos((π/2)*u) : 0.0,
     :Logistic => u -> 1/(exp(u) + 2 + exp(-u)),
-    :Parzen => u -> (ū=abs(u); ū <= 1 ? ū <= 0.5 ? 4/3-8ū^2+8ū^3 : 8*(1-ū^3)/3 : 0.0),
+    # :Parzen => u -> (ū=abs(u); ū <= 1 ? ū <= 0.5 ? 4/3-8ū^2+8ū^3 : 8*(1-ū^3)/3 : 0.0),
     :Sigmoid => u -> (2/π)/(exp(u) + exp(-u)),
     :Silverman => u -> (ū = abs(u)/√2; 0.5*exp(-ū)*sin(ū + π/4)),
 )
