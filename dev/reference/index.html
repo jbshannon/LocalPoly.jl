@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API Reference · LocalPoly.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">LocalPoly.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>API Reference</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>API Reference</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/jbshannon/LocalPoly.jl/blob/main/docs/src/reference.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="API-Reference"><a class="docs-heading-anchor" href="#API-Reference">API Reference</a><a id="API-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#API-Reference" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.LocalPoly" href="#LocalPoly.LocalPoly"><code>LocalPoly.LocalPoly</code></a> — <span class="docstring-category">Module</span></header><section><div><p><strong>LocalPoly.jl</strong></p><p><a href="https://github.com/jbshannon/LocalPoly.jl/actions?query=workflows/CI"><img src="https://github.com/jbshannon/LocalPoly.jl/workflows/CI/badge.svg" alt="Build Status"/></a> <a href="https://jbshannon.github.io/LocalPoly.jl/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt/></a></p><p><code>LocalPoly.jl</code> is a Julia implementation of the local polynomial regression methods outlined in <a href="https://doi.org/10.1201/9780203748725">Fan and Gijbels (1996)</a>. This package is still experimental, and the API is subject to change.</p><p><strong>Overview</strong></p><p>This package provides the function <code>lpreg</code>, which computes the local polynomial regression coefficients and standard errors at a vector of evaluation knots. This function also (optionally) implements the linear binning method to speed up the computations by reducing the dimensionality of the data. The number of bins is controlled by the keyword argument  <code>nbins</code> (set to 0 for no binning).</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; using LocalPoly
+
+julia&gt; x = 2π * rand(1000);
+
+julia&gt; y = sin.(x) + randn(size(x))/4;
+
+julia&gt; v = range(0, 2π, length=100);
+
+julia&gt; β̂ = lpreg(x, y, v; nbins=100)
+100-element Vector{SVector{2, Float64}}:
+ [-0.03070776997429395, 1.2231391275083123]
+ [0.048352477003287916, 1.1570071796231207]
+ ⋮
+ [-0.04452583837750935, 0.7419062295509331]
+ [-0.04543586963674676, 0.28981667874915656]</code></pre><p>The first element of the coefficient vector represents the function estimate <span>$\widehat m (v)$</span>:</p><pre><code class="language-julia-repl hljs">julia&gt; ŷ = first.(β̂)
+100-element Vector{Float64}:
+ -0.03070776997429395
+  0.048352477003287916
+  ⋮
+ -0.04452583837750935
+ -0.04543586963674676</code></pre><p>Plotting the fitted function values against the data:</p><pre><code class="language-julia hljs">using CairoMakie
+f = Figure()
+ax = Axis(f[1, 1])
+scatter!(ax, x, y; markersize=3, label=&quot;Data&quot;)
+lines!(ax, v, sin.(v); color=:darkgreen, label=&quot;True values&quot;)
+lines!(ax, v, ŷ; color=:tomato, linewidth=3, label=&quot;Fitted values&quot;)
+Legend(f[2, 1], ax; orientation=:horizontal, framevisible=false)
+current_figure()</code></pre><p><img src="./docs/src/images/readme/light/fit.svg#gh-light-mode-only" alt="Fit"/> <img src="./docs/src/images/readme/dark/fit.svg#gh-dark-mode-only" alt="Fit"/></p><p>Alternatively, a <code>LPModel</code> object can be constructed to first bin the data before running the regression with the <code>lpreg!</code> method:</p><pre><code class="language-julia-repl hljs">julia&gt; 𝐌 = LPModel(x, y, 1; nbins=100)
+LPModel{Float64}
+        Degree: 1
+  Observations: 1000
+          Bins: 100
+
+julia&gt; β̃ = lpreg!(𝐌, v);
+
+julia&gt; ỹ = first.(β̃);
+
+julia&gt; ỹ == ŷ
+true</code></pre><p><strong>Standard Errors</strong></p><p>The conditional variance-covariance matrix can be computed along with the coefficient estimates at each evaluation point by using the keyword argument <code>se=true</code>.</p><pre><code class="language-julia-repl hljs">julia&gt; β̂, V̂ = lpreg(x, y, v; nbins=100, se=true);
+
+julia&gt; V̂[1]
+2×2 SMatrix{2, 2, Float64, 4} with indices SOneTo(2)×SOneTo(2):
+  0.0338293  -0.207557
+ -0.207557    1.82918
+
+julia&gt; σ̂ = map(V -&gt; sqrt(V[1, 1]), V̂)
+100-element Vector{Float64}:
+ 0.18392746694896067
+ 0.12325024737108828
+ 0.09069661552755462
+ 0.0769932404992409
+ ⋮
+ 0.08852952186657372
+ 0.11884976257937468
+ 0.1795255766016528</code></pre><p>We can use this to add a confidence interval to the plot:</p><pre><code class="language-julia hljs">using Distributions
+tᶜ = quantile(TDist(100-2), 1-0.05/2)
+band!(ax, v, ŷ - tᶜ*σ̂, ŷ + tᶜ*σ̂; color=(:tomato, 0.3))
+current_figure()</code></pre><p><img src="./docs/src/images/readme/light/fit_ci.svg#gh-light-mode-only" alt="Fit with confidence interval"/> <img src="./docs/src/images/readme/dark/fit_ci.svg#gh-dark-mode-only" alt="Fit with confidence interval"/></p><p><strong>Performance</strong></p><p>Set the number of observations to 100,000 and <span>$Y_i = \sin(X_i) + \varepsilon_i$</span> for <span>$X_i \in [0, 2\pi]$</span>. Evaluate the local polynomial estimator at 1,000 points.</p><pre><code class="language-julia-repl hljs">julia&gt; using BenchmarkTools, LocalPoly
+
+julia&gt; x = 2π * rand(100_000);
+
+julia&gt; y = sin.(x) + randn(size(x))/10;
+
+julia&gt; v = range(minimum(x), maximum(x), length=1000);
+
+julia&gt; @btime lpreg($x, $y, $v);
+  164.850 ms (6506550 allocations: 115.18 MiB)</code></pre><p><strong>R</strong></p><pre><code class="language-R hljs">library(KernSmooth)
+library(microbenchmark)
+x &lt;- 2*pi*runif(100000)
+y &lt;- sin(x) + rnorm(100000)/10
+v &lt;- seq(from = 0, to = 2*pi, length.out = 1000)
+h &lt;- dpill(x, y, gridsize = 1000, range.x = c(0, 2*pi))
+microbenchmark(&quot;Local linear&quot; = {locpoly(x, y, bandwidth = h, gridsize = 1000, range.x = c(0, 2*pi))})</code></pre><p>Output:</p><pre><code class="nohighlight hljs">Unit: milliseconds
+         expr      min       lq    mean   median       uq      max neval
+ Local linear 2.150457 2.262588 2.61474 2.377186 2.598788 5.300715   100</code></pre><p><strong>Stata</strong></p><pre><code class="language-stata hljs">clear all
+qui set obs 100000
+gen x = 2*3.14159265*runiform()
+gen y = sin(x) + rnormal()/10
+forval i = 1/10 {
+    timer on `i&#39;
+    lpoly y x, n(1000) kernel(epan2) degree(1) nograph
+    timer off `i&#39;
+}
+timer list</code></pre><p>Output (measured in seconds):</p><pre><code class="nohighlight hljs">1:     14.59 /        1 =      14.5850
+2:     14.45 /        1 =      14.4500
+3:     14.07 /        1 =      14.0730
+4:     14.31 /        1 =      14.3090
+5:     14.44 /        1 =      14.4440
+6:     14.31 /        1 =      14.3120
+7:     14.06 /        1 =      14.0630
+8:     14.22 /        1 =      14.2160
+9:     14.33 /        1 =      14.3280
+10:     15.00 /        1 =      14.9980</code></pre><p><strong>MATLAB</strong></p><pre><code class="language-matlab hljs">x = rand(100000, 1);
+y = sin(x) + randn(100000, 1)/10;
+v = linspace(min(x), max(x), 1000);
+h = 0.087; % approximate plugin bandwidth
+
+T = 100; % number of benchmark trials to run
+tocs = zeros(T, 1);
+for i = 1:numel(tocs)
+    tic; lpreg(x, y, v, h); tocs(i) = toc;
+end
+fprintf(&#39;mean = %4.3f s\n std = %4.3f s\n&#39;, mean(tocs), std(tocs));
+
+function betas = lpreg(x, y, v, h)
+    X = [ones(size(x)) x];
+    betas = v;
+    for i = 1:numel(v)
+        d = x - v(i);
+        X(:, 2) = d;
+        w = kernelfunc(d/h)/h;
+        beta = inv(X&#39; * (w .* X))*(X&#39; * (w .* y));
+        betas(i) = beta(1);
+    end
+
+    function z = kernelfunc(u)
+        I = abs(u) &lt;= 1;
+        z = zeros(size(u));
+        z(I) = 3*(1-u(I).^2)/4;
+    end
+end</code></pre><p>Output:</p><pre><code class="nohighlight hljs">mean = 2.739 s
+ std = 0.130 s</code></pre><p><strong>References</strong></p><ol><li>Fan, J., &amp; Gijbels, I. (1996). Local Polynomial Modelling and its Applications (1st ed.). Chapman &amp; Hall.</li></ol><hr/><p><strong>Exports</strong></p><ul><li><a href="#LocalPoly.LPModel"><code>LPModel</code></a></li><li><a href="#LocalPoly.lpreg-Tuple{AbstractVector, AbstractVector, AbstractVector}"><code>lpreg</code></a></li><li><a href="#LocalPoly.lpreg!-Tuple{LPModel, AbstractVector}"><code>lpreg!</code></a></li><li><a href="#LocalPoly.plugin_bandwidth-Tuple{AbstractVector, AbstractVector, Int64, Int64}"><code>plugin_bandwidth</code></a></li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/LocalPoly.jl#L1">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.KERNELS" href="#LocalPoly.KERNELS"><code>LocalPoly.KERNELS</code></a> — <span class="docstring-category">Constant</span></header><section><div><p><code>Dict</code> containing supported kernel functions&quot;</p><p>Currently available kernels:</p><ul><li><code>:Uniform</code></li><li><code>:Triangular</code></li><li><code>:Epanechnikov</code></li><li><code>:Quartic</code></li><li><code>:Triweight</code></li><li><code>:Tricube</code></li><li><code>:Gaussian</code></li><li><code>:Cosine</code></li><li><code>:Logistic</code></li><li><code>:Sigmoid</code></li><li><code>:Silverman</code></li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/kernels.jl#L1-L16">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.𝐶" href="#LocalPoly.𝐶"><code>LocalPoly.𝐶</code></a> — <span class="docstring-category">Constant</span></header><section><div><p><code>Dict</code> containing the constant <span>$C_{\nu , p}(K)$</span> used for the plugin bandwidth</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/kernels.jl#L32">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.LPModel" href="#LocalPoly.LPModel"><code>LocalPoly.LPModel</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">struct LPModel{T&lt;:Real}</code></pre><hr/><ul><li><p><code>x::AbstractVector{T} where T&lt;:Real</code></p><p>Raw x data</p></li><li><p><code>y::AbstractVector{T} where T&lt;:Real</code></p><p>Raw y data</p></li><li><p><code>g::AbstractVector{T} where T&lt;:Real</code></p><p>Binned x data</p></li><li><p><code>Y::AbstractVector{T} where T&lt;:Real</code></p><p>Binned y data</p></li><li><p><code>c::AbstractVector{T} where T&lt;:Real</code></p><p>Bin weights</p></li><li><p><code>w::AbstractVector{T} where T&lt;:Real</code></p><p>Kernel weight vector</p></li><li><p><code>x̂::AbstractVector{T} where T&lt;:Real</code></p><p>x data centered at x₀</p></li><li><p><code>W::LinearAlgebra.Diagonal{T, Vector{T}} where T&lt;:Real</code></p><p>Weighting matrix</p></li><li><p><code>X::Matrix{T} where T&lt;:Real</code></p><p>Polynomial basis design matrix, centered at x₀</p></li><li><p><code>WX::Matrix{T} where T&lt;:Real</code></p><p><code>W * X</code></p></li><li><p><code>XWX::Matrix{T} where T&lt;:Real</code></p><p><code>WX&#39; * X</code></p></li><li><p><code>XWY::Vector{T} where T&lt;:Real</code></p><p><code>WX&#39; * Y</code></p></li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/regressions.jl#L1">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.linear_binning-Tuple{Any, Any}" href="#LocalPoly.linear_binning-Tuple{Any, Any}"><code>LocalPoly.linear_binning</code></a> — <span class="docstring-category">Method</span></header><section><div><p>Bins the data <code>x</code> and <code>y</code> using a linear binning algorithm. Returns a tuple <code>(g, Y, c)</code></p><pre><code class="language-julia hljs">linear_binning(x, y; nbins)
+</code></pre><p><strong>Output</strong></p><ul><li><code>g</code> - gridpoints for the x data</li><li><code>Y</code> - weighted average of y within each bin</li><li><code>c</code> - weight attached to each gridpoint</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; x = 2π * rand(1000);
+
+julia&gt; y = sin.(x) + randn(size(x))/10;
+
+julia&gt; g, Y, c = linear_binning(x, y; nbins=100);
+
+julia&gt; g
+100-element Vector{Float64}:
+ 0.007731512161049946
+ 0.07102439377241994
+ 0.13431727538378993
+ ⋮
+ 6.210433910075309
+ 6.27372679168668
+
+julia&gt; Y
+100-element Vector{Float64}:
+  0.05587857685614449
+  0.0670877082369906
+  0.0686182710591602
+  ⋮
+ -0.06089998407490756
+  0.007519603457183313
+
+julia&gt; c
+100-element Vector{Float64}:
+  4.7326080715176095
+ 14.163103524831035
+  8.148664889642092
+  ⋮
+ 11.265064011130093
+  3.621345671802331</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/binning.jl#L1-L46">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.lpreg!-Tuple{LPModel, AbstractVector}" href="#LocalPoly.lpreg!-Tuple{LPModel, AbstractVector}"><code>LocalPoly.lpreg!</code></a> — <span class="docstring-category">Method</span></header><section><div><p>Estimate the local polynomial regression model <code>𝐌</code> at the points in <code>v</code>.</p><pre><code class="language-julia hljs">lpreg!(𝐌::LPModel, v::AbstractVector; kernel, h, se) -&gt; Any
+</code></pre><p><strong>Arguments</strong></p><ul><li><code>𝐌::LPModel</code></li><li><code>v::AbstractVector</code></li></ul><p><strong>Keyword Arguments</strong></p><ul><li><code>kernel::Symbol=:Epanechnikov</code> - kernel function</li><li><code>h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel)</code> - bandwidth</li><li><code>se::Bool=false</code> - flag for whether standard errors should be computed and returned</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/regressions.jl#L128-L141">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.lpreg-Tuple{AbstractVector, AbstractVector, AbstractVector}" href="#LocalPoly.lpreg-Tuple{AbstractVector, AbstractVector, AbstractVector}"><code>LocalPoly.lpreg</code></a> — <span class="docstring-category">Method</span></header><section><div><p>Estimate the local polynomial regression of <code>y</code> on <code>x</code> at the points in <code>v</code>.</p><pre><code class="language-julia hljs">lpreg(x::AbstractVector, y::AbstractVector, v::AbstractVector; degree, nbins, kernel, h, se) -&gt; Any
+</code></pre><p><strong>Arguments</strong></p><ul><li><code>x::AbstractVector</code></li><li><code>y::AbstractVector</code></li><li><code>v::AbstractVector</code></li></ul><p><strong>Keyword Arguments</strong></p><ul><li><code>degree::Int=1</code> - degree of the polynomial approximation</li><li><code>nbins::Int=floor(Int, length(x)/100)</code> - number of bins to use (0 for no binning)</li><li><code>kernel::Symbol=:Epanechnikov</code> - kernel function</li><li><code>h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel)</code> - bandwidth</li><li><code>se::Bool=false</code> - flag for whether standard errors should be computed and returned</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/regressions.jl#L166-L182">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.plugin_bandwidth-Tuple{AbstractVector, AbstractVector, Int64, Int64}" href="#LocalPoly.plugin_bandwidth-Tuple{AbstractVector, AbstractVector, Int64, Int64}"><code>LocalPoly.plugin_bandwidth</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">plugin_bandwidth(x::AbstractVector, y::AbstractVector, ν::Int64, p::Int64; kernel) -&gt; Any
+</code></pre><p>Estimate the rule-of-thumb plugin bandwidth.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/5c1a45a31a5039c3580230fa81fa0d54e084b8be/src/kernels.jl#L60">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.21 on <span class="colophon-date" title="Friday 15 July 2022 22:46">Friday 15 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
