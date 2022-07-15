@@ -115,7 +115,7 @@ end
 function _lpvcov(x̂, WX, XWX)
     σ² = var(x̂)
     Sₙ⁻¹ = inv(XWX)
-    V̂ = Sₙ⁻¹ * WX' * σ² * WX * Sₙ⁻¹
+    V̂ = Sₙ⁻¹ * WX' * σ² * WX * Sₙ⁻¹ / length(x̂)
     S1, S2 = size(V̂)
     return SMatrix{S1, S2, eltype(V̂)}(V̂)
 end
@@ -143,11 +143,11 @@ function lpreg!(
     𝐌::LPModel,
     v::AbstractVector;
     kernel::Symbol=:Epanechnikov,
-    h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel),
+    h=plugin_bandwidth(𝐌.x, 𝐌.y, max(size(𝐌.X, 2)-2, 0), size(𝐌.X, 2)-1; kernel),
     se::Bool=false,
 )
     # Get initial values
-    β̂ = _lpreg!(𝐌, h, first(v); kernel)
+    β̂ = _lpreg!(𝐌, first(v), h; kernel)
     se && (V̂ = _lpvcov(𝐌))
 
     # Construct vectors for results

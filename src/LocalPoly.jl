@@ -12,8 +12,10 @@ using DocStringExtensions
 using LinearAlgebra
 using LoopVectorization
 using Parameters
-using StaticArrays
+using Reexport
 using StatsBase
+
+@reexport using StaticArrays
 
 import Polynomials
 import Base.show
