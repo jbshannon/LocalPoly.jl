@@ -17,6 +17,14 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 Folds = "0.2"
+Distributions = "0.25"
+StatsBase = "0.33"
+StaticArrays = "1"
+Parameters = "0.12"
+DocStringExtensions = "0.9"
+LoopVectorization = "0.12"
+Polynomials = "3"
+Reexport = "1"
 julia = "1"
 
 [extras]
