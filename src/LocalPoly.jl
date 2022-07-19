@@ -9,6 +9,7 @@ module LocalPoly
 
 using Distributions
 using DocStringExtensions
+using IfElse
 using LinearAlgebra
 using LoopVectorization
 using Parameters

@@ -89,16 +89,15 @@ function _polybasis(x, x₀, degree)
     return X
 end
 
-function _update_weights!(w, x̂, c, h; kernel=:Epanechnikov)
-    Kₕ(u) = KERNELS[kernel](u/h)/h
+function _update_weights!(w, x̂, c, h; kernel=Val(:Epanechnikov))
     copyto!(w, c)
-    for i in eachindex(w, x̂)
-        w[i] *= Kₕ(x̂[i])
+    @turbo for i in eachindex(w, x̂)
+        w[i] *= Kₕ(kernel, x̂[i], h)
     end
     return w
 end
 
-function _lpreg!(::Val{N}, g, Y, c, w, x̂, W, X, WX, XWX, XWY, β, x₀, h; kernel=:Epanechnikov) where {N}
+function _lpreg!(::Val{N}, g, Y, c, w, x̂, W, X, WX, XWX, XWY, β, x₀, h; kernel=Val(:Epanechnikov)) where {N}
     _polybasis!(X, g, x₀)
     _update_weights!(w, x̂, c, h; kernel)
     mul!(WX, W, X)
@@ -108,7 +107,7 @@ function _lpreg!(::Val{N}, g, Y, c, w, x̂, W, X, WX, XWX, XWY, β, x₀, h; ker
     return SVector{N+1, eltype(β)}(β)
 end
 
-function _lpreg!(𝐌::LPModel{T, N}, x₀, h; kernel=:Epanechnikov) where {T, N}
+function _lpreg!(𝐌::LPModel{T, N}, x₀, h; kernel=Val(:Epanechnikov)) where {T, N}
     @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY, β = 𝐌
     return _lpreg!(Val(N), g, Y, c, w, x̂, W, X, WX, XWX, XWY, β, x₀, h; kernel)
 end
@@ -136,19 +135,19 @@ $(TYPEDSIGNATURES)
 - `v::AbstractVector`
 
 ## Keyword Arguments
-- `kernel::Symbol=:Epanechnikov` - kernel function
+- `kernel=Val(:Epanechnikov)` - kernel function
 - `h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel)` - bandwidth
 - `se::Bool=false` - flag for whether standard errors should be computed and returned
 """
 function lpreg!(
     𝐌::LPModel,
     v::AbstractVector;
-    kernel::Symbol=:Epanechnikov,
-    h=plugin_bandwidth(𝐌.x, 𝐌.y, max(size(𝐌.X, 2)-2, 0), size(𝐌.X, 2)-1; kernel),
+    kernel=:Epanechnikov,
+    h=plugin_bandwidth(𝐌.x, 𝐌.y; ν=max(size(𝐌.X, 2)-2, 0), p=size(𝐌.X, 2)-1, kernel),
     se::Bool=false,
 )
     # Get initial values
-    β̂ = _lpreg!(𝐌, first(v), h; kernel)
+    β̂ = _lpreg!(𝐌, first(v), h; kernel=Val(kernel))
     se && (V̂ = _lpvcov(𝐌))
 
     # Construct vectors for results
@@ -157,7 +156,7 @@ function lpreg!(
 
     # Populate vectors for remaining regressions
     for i in Base.Iterators.drop(eachindex(v), 1)
-        @inbounds 𝛃[i] = _lpreg!(𝐌, v[i], h; kernel)
+        @inbounds 𝛃[i] = _lpreg!(𝐌, v[i], h; kernel=Val(kernel))
         se && (@inbounds 𝐕[i] = _lpvcov(𝐌))
     end
 
@@ -177,7 +176,7 @@ $(TYPEDSIGNATURES)
 ## Keyword Arguments
 - `degree::Int=1` - degree of the polynomial approximation
 - `nbins::Int=floor(Int, length(x)/100)` - number of bins to use (0 for no binning)
-- `kernel::Symbol=:Epanechnikov` - kernel function
+- `kernel=Val(:Epanechnikov)` - kernel function
 - `h=plugin_bandwidth(x, y, size(𝐌.X, 2)-1, size(𝐌.X, 2); kernel)` - bandwidth
 - `se::Bool=false` - flag for whether standard errors should be computed and returned
 """
@@ -187,8 +186,8 @@ function lpreg(
     v::AbstractVector;
     degree::Int=1,
     nbins::Int=floor(Int, length(x)/100),
-    kernel::Symbol=:Epanechnikov,
-    h=plugin_bandwidth(x, y, degree-1, degree; kernel),
+    kernel=:Epanechnikov,
+    h=plugin_bandwidth(x, y; ν=degree-1, p=degree, kernel),
     se=false,
 )
     𝐌 = LPModel(x, y, degree; nbins)
