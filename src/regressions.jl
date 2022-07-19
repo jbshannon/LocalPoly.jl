@@ -35,6 +35,8 @@ struct LPModel{T <: Real}
     XWX::Matrix{T}
     "`WX' * Y`"
     XWY::Vector{T}
+    "Results vector for `XWX\\XWY`"
+    β::Vector{T}
 end
 
 function show(io::IO, m::LPModel)
@@ -52,17 +54,16 @@ function LPModel(x::Vector{T}, y::Vector{T}, degree::Int; nbins::Int=0) where T 
     end
 
     # Pre-allocate matrices
-    N = length(g)
-    k = degree+1
-    w = zeros(T, N)
+    w = ones(T, length(g))
     W = Diagonal(w)
-    X = ones(T, N, k)
+    X = _polybasis(g, median(g), degree)
     x̂ = view(X, :, 2)
-    WX = ones(T, N, k)
-    XWX = ones(T, k, k)
-    XWY = ones(T, k)
+    WX = W*X
+    XWX = WX'X
+    XWY = WX'Y
+    β = lu(XWX)\XWY
 
-    return LPModel(x, y, g, Y, c, w, x̂, W, X, WX, XWX, XWY)
+    return LPModel(x, y, g, Y, c, w, x̂, W, X, WX, XWX, XWY, β)
 end
 
 function LPModel(x::Vector{R}, y::Vector{S}; degree::Int=1, nbins::Int=0) where {R<:Real, S<:Real}
@@ -97,19 +98,19 @@ function _update_weights!(w, x̂, c, h; kernel=:Epanechnikov)
     return w
 end
 
-function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=:Epanechnikov)
+function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, β, x₀, h; kernel=:Epanechnikov)
     _polybasis!(X, g, x₀)
     _update_weights!(w, x̂, c, h; kernel)
     mul!(WX, W, X)
     mul!(XWX, WX', X)
     mul!(XWY, WX', Y)
-    β̂ = XWX\XWY
-    return SVector{length(β̂), eltype(β̂)}(β̂)
+    ldiv!(β, lu!(XWX), XWY)
+    return SVector{length(β), eltype(β)}(β)
 end
 
 function _lpreg!(𝐌::LPModel, x₀, h; kernel=:Epanechnikov)
-    @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY = 𝐌
-    return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
+    @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY, β = 𝐌
+    return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, β, x₀, h; kernel)
 end
 
 function _lpvcov(x̂, WX, XWX)
