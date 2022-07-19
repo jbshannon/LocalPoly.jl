@@ -5,7 +5,7 @@ $(TYPEDEF)
 
 $(TYPEDFIELDS)
 """
-struct LPModel{T <: Real}
+struct LPModel{T <: Real, N}
     # Raw data
     "Raw x data"
     x::AbstractVector{T}
@@ -62,7 +62,7 @@ function LPModel(x::Vector{T}, y::Vector{T}, degree::Int; nbins::Int=0) where T 
     XWX = ones(T, k, k)
     XWY = ones(T, k)
 
-    return LPModel(x, y, g, Y, c, w, x̂, W, X, WX, XWX, XWY)
+    return LPModel{T, degree}(x, y, g, Y, c, w, x̂, W, X, WX, XWX, XWY)
 end
 
 function LPModel(x::Vector{R}, y::Vector{S}; degree::Int=1, nbins::Int=0) where {R<:Real, S<:Real}
@@ -97,19 +97,19 @@ function _update_weights!(w, x̂, c, h; kernel=:Epanechnikov)
     return w
 end
 
-function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=:Epanechnikov)
+function _lpreg!(::Val{N}, g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=:Epanechnikov) where {N}
     _polybasis!(X, g, x₀)
     _update_weights!(w, x̂, c, h; kernel)
     mul!(WX, W, X)
     mul!(XWX, WX', X)
     mul!(XWY, WX', Y)
     β̂ = XWX\XWY
-    return SVector{length(β̂), eltype(β̂)}(β̂)
+    return SVector{N+1, eltype(β̂)}(β̂)
 end
 
-function _lpreg!(𝐌::LPModel, x₀, h; kernel=:Epanechnikov)
+function _lpreg!(𝐌::LPModel{T, N}, x₀, h; kernel=:Epanechnikov) where {T, N}
     @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY = 𝐌
-    return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
+    return _lpreg!(Val(N), g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
 end
 
 function _lpvcov(x̂, WX, XWX)
