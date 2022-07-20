@@ -13,6 +13,8 @@ kernelfunc(::Val{:Silverman}, u) = (ū = abs(u)/√2; 0.5*exp(-ū)*sin(ū+π/
 
 Kₕ(K, u, h) = kernelfunc(K, u/h)/h
 
+
+# TODO: support direct computation of these constants by integrating equivalent kernels
 "`Dict` containing the constant ``C_{\\nu , p}(K)`` used for the plugin bandwidth"
 const 𝐶 = Dict(
     (0, 1, :Gaussian) => 0.776,
@@ -41,23 +43,21 @@ const 𝐶 = Dict(
     (2, 3, :Triweight) => 3.503,
 )
 
+polyderiv(β, k) = [β[n+1]*(factorial(n)÷factorial(n-k)) for n in k:length(β)-1]
+
 """
 $(TYPEDSIGNATURES)
 
 Estimate the rule-of-thumb plugin bandwidth.
 """
 function plugin_bandwidth(
-    x::AbstractVector, y::AbstractVector;
+    x::AbstractVector{T}, y::AbstractVector{T};
     ν::Int=0, p::Int=1, kernel=:Epanechnikov
-)
-    return _plugin_bandwidth(Val(kernel), x, y, ν, p)
-end
-
-function _plugin_bandwidth(::Val{K}, x, y, ν, p) where K
-    m̌ = Polynomials.fit(x, y, p+3)
-    m̌⁽ᵖ⁺¹⁾ = Polynomials.derivative(m̌, p+1)
-    ε̂ = @turbo @. y - m̌(x)
-    σ̃² = var(ε̂)
-    ȟ = 𝐶[(ν, p, K)] * (σ̃² / sum(abs2∘m̌⁽ᵖ⁺¹⁾, x))^(1/(2p+3))
+) where {T <: Real}
+    X = _polybasis(x, 0.0, p+3)
+    β̌ = (X'X)\(X'y)
+    σ̃² = var(y - X*β̌)
+    m̌⁽ᵖ⁺¹⁾ = view(X, :, 1:3)*polyderiv(β̌, p+1)
+    ȟ = 𝐶[(ν, p, kernel)] * (σ̃²/sum(abs2, m̌⁽ᵖ⁺¹⁾))^(1/(2p+3))
     return ȟ
 end
