@@ -8,9 +8,9 @@ $(TYPEDFIELDS)
 struct LPModel{T <: Real, N}
     # Raw data
     "Raw x data"
-    x::AbstractVector{T}
+    x::Vector{T}
     "Raw y data"
-    y::AbstractVector{T}
+    y::Vector{T}
 
     # Binned data
     "Binned x data"
@@ -32,11 +32,11 @@ struct LPModel{T <: Real, N}
     "`W * X`"
     WX::Matrix{T}
     "`WX' * X`"
-    XWX
+    XWX # how to make this inferrable from N?
     "`WX' * Y`"
     XWY::Vector{T}
     "Results vector for `XWX\\XWY`"
-    Σ
+    Σ::UniformScaling{T}
     ΣWX::Matrix{T}
     XWΣWX::Matrix{T}
     XWΣWXS::Matrix{T}
@@ -72,14 +72,18 @@ function LPModel(x::Vector{T}, y::Vector{T}, degree::Int; nbins::Int=0) where T 
     XWΣWX = WX'ΣWX
     Sₙ⁻¹ = inv(XWX)
     XWΣWXS = XWΣWX*Sₙ⁻¹
-    V̂ = Sₙ⁻¹*XWΣWXS
+    V̂ = MMatrix{N, N, T}(Sₙ⁻¹*XWΣWXS)
 
     return LPModel{T, degree}(x, y, g, Y, c, w, x̂, W, X, WX, XWX, XWY, Σ, ΣWX, XWΣWX, XWΣWXS, V̂)
 end
 
 function LPModel(x::Vector{R}, y::Vector{S}; degree::Int=1, nbins::Int=0) where {R<:Real, S<:Real}
     x, y = promote(x, y)
-    return LPModel(x, y, degree; nbins)
+    return LPModel(x, y; degree, nbins)
+end
+
+function LPModel(x::AbstractVector{R}, y::AbstractVector{S}; degree::Int=1, nbins::Int=0) where {R<:Real, S<:Real}
+    return LPModel(convert(Vector{R}, x), convert(Vector{S}, y); degree, nbins)
 end
 
 function _polybasis!(X, x, x₀)
@@ -108,20 +112,18 @@ function _update_weights!(w, x̂, c, h; kernel=Val(:Epanechnikov))
     return w
 end
 
-function _lpreg!(::Val{N}, g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=Val(:Epanechnikov)) where {N}
+function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=Val(:Epanechnikov))
     _polybasis!(X, g, x₀)
     _update_weights!(w, x̂, c, h; kernel)
-    mul!(WX, W, X)
-    mul!(XWX, WX', X)
+    mul!(WX, W, X) # including causes total 4 allocations
+    mul!(XWX, WX', X) # including causes total 4 allocations
     mul!(XWY, WX', Y)
-    # ldiv!(β, lu!(XWX), XWY)
-    # return SVector{N+1, eltype(β)}(β)
-    return lu(XWX)\XWY
+    return lu(XWX)\XWY # this line causes 7 allocations
 end
 
 function _lpreg!(𝐌::LPModel{T, N}, x₀, h; kernel=Val(:Epanechnikov)) where {T, N}
     @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY = 𝐌
-    return _lpreg!(Val(N), g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
+    return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
 end
 
 function _lpvcov!(ΣWX, XWΣWX, XWΣWXS, V̂, WX, XWX, Σ)
