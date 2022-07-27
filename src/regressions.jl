@@ -5,7 +5,7 @@ $(TYPEDEF)
 
 $(TYPEDFIELDS)
 """
-struct LPModel{T <: Real, N}
+struct LPModel{T <: Real}
     # Raw data
     "Raw x data"
     x::Vector{T}
@@ -74,7 +74,7 @@ function LPModel(x::Vector{T}, y::Vector{T}, degree::Int; nbins::Int=0) where T 
     XWΣWXS = XWΣWX*Sₙ⁻¹
     V̂ = MMatrix{N, N, T}(Sₙ⁻¹*XWΣWXS)
 
-    return LPModel{T, degree}(x, y, g, Y, c, w, x̂, W, X, WX, XWX, XWY, Σ, ΣWX, XWΣWX, XWΣWXS, V̂)
+    return LPModel{T}(x, y, g, Y, c, w, x̂, W, X, WX, XWX, XWY, Σ, ΣWX, XWΣWX, XWΣWXS, V̂)
 end
 
 function LPModel(x::Vector{R}, y::Vector{S}; degree::Int=1, nbins::Int=0) where {R<:Real, S<:Real}
@@ -121,7 +121,7 @@ function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=Val(:Epane
     return lu(XWX)\XWY # this line causes 7 allocations
 end
 
-function _lpreg!(𝐌::LPModel{T, N}, x₀, h; kernel=Val(:Epanechnikov)) where {T, N}
+function _lpreg!(𝐌::LPModel, x₀, h; kernel=Val(:Epanechnikov))
     @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY = 𝐌
     return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
 end
@@ -139,18 +139,6 @@ end
 function _lpvcov!(𝐌::LPModel)
     @unpack ΣWX, XWΣWX, XWΣWXS, V̂, WX, XWX, Σ = 𝐌
     return _lpvcov!(ΣWX, XWΣWX, XWΣWXS, V̂, WX, XWX, Σ)
-end
-
-function _lpvcov(::Val{N}, x̂, WX, XWX) where {N}
-    σ² = var(x̂)
-    Sₙ⁻¹ = inv(XWX)
-    V̂ = Sₙ⁻¹ * WX' * σ² * WX * Sₙ⁻¹ / length(x̂)
-    return SMatrix{N+1, N+1, eltype(V̂)}(V̂)
-end
-
-function _lpvcov(𝐌::LPModel{T, N}) where {T, N}
-    @unpack x̂, WX, XWX = 𝐌
-    return _lpvcov(Val(N), x̂, WX, XWX)
 end
 
 """
