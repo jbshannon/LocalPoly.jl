@@ -156,15 +156,15 @@ $(TYPEDSIGNATURES)
 - `se::Bool=false` - flag for whether standard errors should be computed and returned
 """
 function lpreg!(
-    𝐌::LPModel{T, N},
+    𝐌::LPModel{T},
     v::AbstractVector;
     kernel=:Epanechnikov,
     h=plugin_bandwidth(𝐌.x, 𝐌.y; ν=max(size(𝐌.X, 2)-2, 0), p=size(𝐌.X, 2)-1, kernel),
     se::Bool=false,
-) where {T, N}
+) where {T}
     # Get initial values
     β̂ = _lpreg!(𝐌, first(v), h; kernel=Val(kernel))
-    se && (V̂ = SMatrix{N+1, N+1, T}(_lpvcov!(𝐌)))
+    se && (V̂ = _lpvcov!(𝐌))
 
     # Construct vectors for results
     𝛃 = Vector{typeof(β̂)}(undef, length(v)); 𝛃[1] = β̂
@@ -173,7 +173,7 @@ function lpreg!(
     # Populate vectors for remaining regressions
     for i in Base.Iterators.drop(eachindex(v), 1)
         @inbounds 𝛃[i] = _lpreg!(𝐌, v[i], h; kernel=Val(kernel))
-        se && (@inbounds 𝐕[i] = SMatrix{N+1, N+1, T}(_lpvcov!(𝐌)))
+        se && (@inbounds 𝐕[i] = _lpvcov!(𝐌))
     end
 
     return se ? (𝛃, 𝐕) : 𝛃
