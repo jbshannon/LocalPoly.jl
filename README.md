@@ -12,27 +12,18 @@ This package provides the function `lpreg`, which computes the local polynomial 
 
 ## Examples
 
-```julia-repl
-julia> using LocalPoly
-
-julia> x = 2π * rand(1000);
-
-julia> y = sin.(x) + randn(size(x))/4;
-
-julia> v = range(0, 2π, length=100);
-
-julia> β̂ = lpreg(x, y, v; nbins=100)
-100-element Vector{SVector{2, Float64}}:
- [-0.03070776997429395, 1.2231391275083123]
- [0.048352477003287916, 1.1570071796231207]
- ⋮
- [-0.04452583837750935, 0.7419062295509331]
- [-0.04543586963674676, 0.28981667874915656]
+```julia
+using LocalPoly, Random
+Random.seed!(42)
+x = 2π * rand(1000)
+y = sin.(x) + randn(size(x))/4
+v = range(0, 2π, length=100)
+β̂ = lpreg(x, y, v; nbins=100)
 ```
 
-The first element of the coefficient vector represents the function estimate $\widehat m (v)$:
+The first element of the coefficient vector represents the function estimate at the point of evaluation:
 
-```julia-repl
+```julia
 julia> ŷ = first.(β̂)
 100-element Vector{Float64}:
  -0.03070776997429395
@@ -60,7 +51,7 @@ current_figure()
 
 Alternatively, a `LPModel` object can be constructed to first bin the data before running the regression with the `lpreg!` method:
 
-```julia-repl
+```julia
 julia> 𝐌 = LPModel(x, y, 1; nbins=100)
 LPModel{Float64}
         Degree: 1
@@ -79,24 +70,23 @@ true
 
 The conditional variance-covariance matrix can be computed along with the coefficient estimates at each evaluation point by using the keyword argument `se=true`.
 
-```julia-repl
+```julia
 julia> β̂, V̂ = lpreg(x, y, v; nbins=100, se=true);
 
 julia> V̂[1]
 2×2 SMatrix{2, 2, Float64, 4} with indices SOneTo(2)×SOneTo(2):
-  0.0338293  -0.207557
- -0.207557    1.82918
+  0.0250571  -0.169832
+ -0.169832    1.85631
 
 julia> σ̂ = map(V -> sqrt(V[1, 1]), V̂)
 100-element Vector{Float64}:
- 0.18392746694896067
- 0.12325024737108828
- 0.09069661552755462
- 0.0769932404992409
+ 0.15829439002638532
+ 0.10565459771497485
+ 0.08285173519350204
  ⋮
- 0.08852952186657372
- 0.11884976257937468
- 0.1795255766016528
+ 0.08866937970971286
+ 0.11655671525900956
+ 0.17517857236448717
 ```
 
 We can use this to add a confidence interval to the plot:
@@ -115,17 +105,15 @@ current_figure()
 
 Set the number of observations to 100,000 and $Y_i = \sin(X_i) + \varepsilon_i$ for $X_i \in [0, 2\pi]$. Evaluate the local polynomial estimator at 1,000 points.
 
-```julia-repl
-julia> using BenchmarkTools, LocalPoly
-
-julia> x = 2π * rand(100_000);
-
-julia> y = sin.(x) + randn(size(x))/10;
-
-julia> v = range(minimum(x), maximum(x), length=1000);
-
-julia> @btime lpreg($x, $y, $v);
-  164.850 ms (6506550 allocations: 115.18 MiB)
+```julia
+using BenchmarkTools, LocalPoly
+x = 2π * rand(100_000)
+y = sin.(x) + randn(size(x))/10
+v = range(minimum(x), maximum(x), length=1000)
+@btime h = plugin_bandwidth($x, $y)
+# 2.701 ms (14 allocations: 6.10 MiB)
+@btime lpreg($x, $y, $v; h=$h)
+# 11.204 ms (9563 allocations: 442.02 KiB)
 ```
 
 ### R
@@ -137,13 +125,13 @@ x <- 2*pi*runif(100000)
 y <- sin(x) + rnorm(100000)/10
 v <- seq(from = 0, to = 2*pi, length.out = 1000)
 h <- dpill(x, y, gridsize = 1000, range.x = c(0, 2*pi))
-microbenchmark("Local linear" = {locpoly(x, y, bandwidth = h, gridsize = 1000, range.x = c(0, 2*pi))})
+microbenchmark("KernSmooth" = locpoly(x, y, bandwidth = h, gridsize = 1000, range.x = c(0, 2*pi)))
 ```
 Output:
 ```
 Unit: milliseconds
-         expr      min       lq    mean   median       uq      max neval
- Local linear 2.150457 2.262588 2.61474 2.377186 2.598788 5.300715   100
+       expr      min       lq     mean   median       uq      max neval
+ KernSmooth 2.062024 2.992719 3.506988 3.205222 3.713487 12.05903   100
 ```
 
 ### Stata
