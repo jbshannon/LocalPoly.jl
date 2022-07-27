@@ -9,13 +9,13 @@ module LocalPoly
 
 using Distributions
 using DocStringExtensions
+using IfElse
 using LinearAlgebra
 using LoopVectorization
 using Parameters
 using StaticArrays
 using StatsBase
 
-import Polynomials
 import Base.show
 
 export LPModel
