@@ -118,6 +118,7 @@ function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=Val(:Epane
     mul!(WX, W, X) # including causes total 4 allocations
     mul!(XWX, WX', X) # including causes total 4 allocations
     mul!(XWY, WX', Y)
+    det(XWX) < 1e-8 && @warn("Nearly singular matrix", XWX, x₀)
     return lu(XWX)\XWY # this line causes 7 allocations
 end
 
