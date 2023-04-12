@@ -18,12 +18,13 @@ using StatsBase
 
 import Base.show
 
-export LPModel
+export LPModel, LPGridModel
 export lpreg!, lpreg
 export plugin_bandwidth
 
 include("binning.jl")
 include("kernels.jl")
 include("regressions.jl")
+include("gridmodel.jl")
 
 end
