@@ -60,7 +60,7 @@ function linear_binning!(g, Y, c, x, y)
     @turbo for i in eachindex(x, y)
         L = (x[i] - xmin)/Δ + 1 # transformation matching gridpoints to indices
         𝓁 = floor(Int, L) # index of left gridpoint
-        w = L - 𝓁 # remainder, used for weighting
+        w = 1 - (L - 𝓁) # remainder, used for weighting
         Y[𝓁] += w * y[i]
         Y[𝓁+1] += (1-w) * y[i]
         c[𝓁] += w
