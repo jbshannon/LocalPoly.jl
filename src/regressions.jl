@@ -112,13 +112,20 @@ function _update_weights!(w, x̂, c, h; kernel=Val(:Epanechnikov))
     return w
 end
 
+function locate!(𝐌::LPModel, x₀, h; kernel=Val(:Epanechnikov))
+    @unpack g, X, w, x̂, c = 𝐌
+    _polybasis!(X, g, x₀)
+    _update_weights!(w, x̂, c, h; kernel)
+    return 𝐌
+end
+
 function _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel=Val(:Epanechnikov))
     _polybasis!(X, g, x₀)
     _update_weights!(w, x̂, c, h; kernel)
     mul!(WX, W, X) # including causes total 4 allocations
     mul!(XWX, WX', X) # including causes total 4 allocations
     mul!(XWY, WX', Y)
-    det(XWX) < 1e-8 && @warn("Nearly singular matrix", XWX, x₀)
+    det(XWX) < 1e-12 && @debug("Nearly singular matrix ($(det(XWX)))", XWX, x₀)
     return lu(XWX)\XWY # this line causes 7 allocations
 end
 
