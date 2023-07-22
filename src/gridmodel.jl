@@ -14,7 +14,8 @@ struct LPGridModel{T <: Real}
 
     # Binned data
     "Binned x data"
-    g::Vector{T}
+    # g::Vector{T}
+    g
     "Binned y data"
     Y::Vector{T}
     "Bin weights"
@@ -38,9 +39,10 @@ function LPGridModel(
     h=plugin_bandwidth(x, y; ν=degree-1, p=degree, kernel=:Epanechnikov),
 ) where T <: Real
 
-    g, Y, c = linear_binning(x, y; nbins)
-    Δg = (maximum(x)-minimum(x))/(nbins-1)
-    YΣ = @turbo Y .* c
+    grid = linear_binning(x, y; nbins)
+    @unpack g, c, d = grid
+    YΣ = d
+    Δg = step(g)
 
     # Pre-allocate matrices
     M = 2nbins - 1
@@ -100,7 +102,7 @@ function _shifted_matmul!(Z, gridindex, p, X, y; idxbw=length(y))
     nbins = length(y)
     fill!(Z, zero(eltype(Z)))
     I = max(gridindex-idxbw, 1):min(gridindex+idxbw, nbins)
-    @turbo for j in 1:1+p, i in I
+    for j in 1:1+p, i in I
         Z[j] += X[i+nbins-gridindex, j] * y[i]
     end
     return Z

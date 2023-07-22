@@ -14,7 +14,8 @@ struct LPModel{T <: Real}
 
     # Binned data
     "Binned x data"
-    g::Vector{T}
+    g
+    # g::Vector{T}
     "Binned y data"
     Y::Vector{T}
     "Bin weights"
@@ -52,9 +53,17 @@ end
 
 function LPModel(x::Vector{T}, y::Vector{T}, degree::Int; nbins::Int=0) where T <: Real
     if nbins > 0
-        g, Y, c = linear_binning(x, y; nbins=nbins)
+        grid = linear_binning(x, y; nbins=nbins)
+        @unpack g, c, d = grid
     else
         g, Y, c = x, y, ones(T, size(x))
+    end
+
+    Y = zero(d)
+    for i in eachindex(d, c) # converted weighted sum to weighted average
+        if c[i] > 0
+            @inbounds Y[i] = d[i] / c[i]
+        end
     end
 
     # Pre-allocate matrices
