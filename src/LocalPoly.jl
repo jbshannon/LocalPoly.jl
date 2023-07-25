@@ -7,6 +7,7 @@ $(EXPORTS)
 """
 module LocalPoly
 
+using Base.Cartesian
 using Distributions
 using DocStringExtensions
 using IfElse
