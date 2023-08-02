@@ -163,11 +163,11 @@ function _derivative()
     return fig
 end
 
-lightfig = with_theme(_ci, github_light)
+lightfig = with_theme(_derivative, github_light)
 save(joinpath(figdir, "readme", "light", "fit_derivative.svg"), lightfig)
 save(joinpath(figdir, "example", "fit_derivative.svg"), lightfig)
 
-darkfig = with_theme(_ci, github_dark)
+darkfig = with_theme(_derivative, github_dark)
 save(joinpath(figdir, "readme", "dark", "fit_derivative.svg"), darkfig)
 @info "Saved fit derivative curve"
 
