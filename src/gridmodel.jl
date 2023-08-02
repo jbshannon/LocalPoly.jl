@@ -42,7 +42,9 @@ function LPGridModel(
     grid = linear_binning(x, y; nbins)
     @unpack g, c, d = grid
     YΣ = d
-    Δg = step(g)
+    Y = d ./ c
+    Δg = step(first(g))
+    g = collect(first(g))
 
     # Pre-allocate matrices
     M = 2nbins - 1

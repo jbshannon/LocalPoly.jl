@@ -58,6 +58,7 @@ function LPModel(x::Vector{T}, y::Vector{T}, degree::Int; nbins::Int=0) where T 
     else
         g, Y, c = x, y, ones(T, size(x))
     end
+    g = first(g)
 
     Y = zero(d)
     for i in eachindex(d, c) # converted weighted sum to weighted average
@@ -115,7 +116,7 @@ end
 
 function _update_weights!(w, x̂, c, h; kernel=Val(:Epanechnikov))
     copyto!(w, c)
-    @turbo for i in eachindex(w, x̂)
+    for i in eachindex(w, x̂)
         w[i] *= Kₕ(kernel, x̂[i], h)
     end
     return w
@@ -141,21 +142,6 @@ end
 function _lpreg!(𝐌::LPModel, x₀, h; kernel=Val(:Epanechnikov))
     @unpack g, Y, c, w, x̂, W, X, WX, XWX, XWY = 𝐌
     return _lpreg!(g, Y, c, w, x̂, W, X, WX, XWX, XWY, x₀, h; kernel)
-end
-
-function _lpvcov!(ΣWX, XWΣWX, XWΣWXS, V̂, WX, XWX, Σ)
-    Sₙ⁻¹ = inv(XWX)
-    mul!(ΣWX, Σ, WX)
-    mul!(XWΣWX, WX', ΣWX)
-    rmul!(XWΣWX, 1/size(ΣWX, 1))
-    mul!(XWΣWXS, XWΣWX, Sₙ⁻¹)
-    mul!(V̂, Sₙ⁻¹, XWΣWXS)
-    return V̂
-end
-
-function _lpvcov!(𝐌::LPModel)
-    @unpack ΣWX, XWΣWX, XWΣWXS, V̂, WX, XWX, Σ = 𝐌
-    return _lpvcov!(ΣWX, XWΣWX, XWΣWXS, V̂, WX, XWX, Σ)
 end
 
 """
