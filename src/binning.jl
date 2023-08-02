@@ -1,89 +1,130 @@
 """
-    togridindex(x, g)
+    togridindex(x, gmin, δ) = 1 + (x - gmin)/δ
 
-Transform the value `x` to an index into the range `g`.
-"""
-togridindex(x, g) = 1 + (x - minimum(g))/step(g)
-
-"""
-Bins the data `x` and `y` using a linear binning algorithm.
-
-$(SIGNATURES)
-
-## Output
-A `NamedTuple` with fields:
-- `g` - `Tuple` of `StepRange`s representing the grid points
-- `c` - weight attached to each gridpoint
-- `d` - weighted sum of `y` at each gridpoint
+Transform the value `x` to an index into a grid with minimum `gmin` and step length `δ`.
 
 ## Examples
+
 ```julia-repl
-julia> linear_binning([0, 0.3, 1], [1, 1, 1]*2; nbins=2)
-(g = 0.0:1.0:1.0, c = [1.7, 1.3], d = [3.4, 2.6])
+julia> g = 0:0.1:1
+0.0:0.1:1.0
+
+julia> gmin = minimum(g)
+0.0
+
+julia> δ = step(g)
+0.1
+
+julia> i = togridindex(0.5, gmin, δ)
+6.0
+
+julia> collect(g)[Int(i)] == 0.5
+true
+
+julia> fractional_index = togridindex(2^(-1/2), gmin, δ)
+8.071067811865476
 ```
 """
-function linear_binning(
-    x::Vector{T}, y::Vector{S};
-    nbins=max(2, floor(Int, length(x)/100))
-) where {T <: Real, S <: Real}
-    g = range(minimum(x), maximum(x), length=nbins)
-    R = promote_type(typeof(togridindex(first(x), g)), S)
-    M = length(g)
-    grid = (g = g, c = zeros(R, M), d = zeros(R, M))
-    linear_binning!(grid, x, y)
+togridindex(x, gmin, δ) = 1 + (x - gmin)/δ
+
+"""
+    togridindex(x, g::AbstractRange)
+
+Transform the value `x` to an index into the range `g`. This method is ~3 times slower than the direct method, so repeated calls should pre-compute the range minimum and step.
+
+## Examples
+
+```julia-repl
+julia> g = 0:0.1:1
+0.0:0.1:1.0
+
+julia> i = togridindex(0.5, g)
+6.0
+
+julia> collect(g)[Int(i)] == 0.5
+true
+
+julia> fractional_index = togridindex(2^(-1/2), gmin, δ)
+8.071067811865476
+```
+"""
+togridindex(x, g) = togridindex(x, minimum(g), step(g)) # much slower
+
+struct GridData{T <: Real, N, R <: AbstractRange{T}}
+    "Tuple of grid steps in each dimension"
+    g::NTuple{N, R}
+
+    "Weights at grid points"
+    c::Array{T, N}
+
+    "Weighted sum of data at grid points"
+    d::Array{T, N}
+end
+
+function show(io::IO, G::GridData{T, N, R}) where {T, N, R}
+    @unpack g = G
+    println(io, typeof(G))
+    println(io, "  Minimum: $(minimum.(g))")
+    println(io, "  Maximum: $(maximum.(g))")
+    println(io, "     Step: $(step.(g))")
+    println(io, "   Length: $(length.(g))")
+end
+
+function show(io::IO, G::GridData{T, 1, R}) where {T, R}
+    g = G.g[1]
+    println(io, typeof(G))
+    println(io, "  Minimum: $(minimum(g))")
+    println(io, "  Maximum: $(maximum(g))")
+    println(io, "     Step: $(step(g))")
+    println(io, "   Length: $(length(g))")
+end
+
+# TODO: make this more sophisticated
+function guessbins(X)
+    N = floor(Int, size(X, 1)/10)
+    return ntuple(i -> max(2, N), size(X, 2))
 end
 
 function linear_binning(
-    X::Matrix{T}, y::Vector{T};
-    nbins=ntuple(i -> max(2, floor(Int, size(X, 1)/100)), size(X, 2))
-) where {T <: Real}
-    g = ntuple(size(X, 2)) do j
+    X::Array{T, N}, y::Vector{T};
+    nbins=guessbins(X),
+) where {N, T}
+    g = ntuple(Val(N)) do j
         Xj = view(X, :, j)
-        range(minimum(Xj), maximum(Xj), length=nbins[j])
+        n = nbins[j]
+        # δ = (maximum(Xj) - minimum(Xj))/(n-2)
+        range(minimum(Xj), maximum(Xj), length=n)
     end
     M = length.(g)
-    grid = (g = g, c = zeros(T, M), d = zeros(T, M))
+    grid = GridData(g, zeros(T, M), zeros(T, M))
     linear_binning!(grid, X, y)
 end
 
-# generic code for N dimensions
-function _linear_binning!(grid, X, y, ts, ::Val{N}) where N
-    @unpack g, c, d = grid
-    L = ntuple(j -> togridindex(X[j], g[j]), Val(N))
-    𝓁 = ntuple(j -> floor(Int, L[j]), Val(N))
-    r = ntuple(j -> 1 - (L[j] - 𝓁[j]), Val(N))
-    w = ntuple(j -> prod(k -> ts[j][k] == 0 ? r[k] : 1-r[k], 1:N), Val(2^N))
-
-    for j in 1:2^N
-        I = CartesianIndex(𝓁) + CartesianIndex(ts[j])
-        c[I] += w[j]
-        d[I] += w[j] * y
-    end
-end
-
 # specialized code for 1 dimension
-function linear_binning!(grid, x::Array{T, 1}, y) where {T <: Real}
+function linear_binning!(grid::GridData{T, 1, R}, x::Array{T, 1}, y) where {T <: Real, R}
     @unpack g, c, d = grid
-    Ilast = last(CartesianIndices(c))
+    gmin = minimum(g[1])
+    δ = step(g[1])
+    N = last(eachindex(c))
     for i in eachindex(x, y)
-        L = togridindex(x[i], g) # transformation matching gridpoints to indices
+        L = togridindex(x[i], gmin, δ) # transformation matching gridpoints to indices
         𝓁 = floor(Int, L) # index of left gridpoint
         w = 1 - (L - 𝓁) # remainder, used for weighting
         c[𝓁] += w
         d[𝓁] += w * y[i]
-        I𝓁 = min(CartesianIndex(𝓁 + 1), Ilast)
-        c[I𝓁] += 1-w
-        d[I𝓁] += (1-w) * y[i]
+        𝓁R = min(𝓁+1, N)
+        c[𝓁R] += 1-w
+        d[𝓁R] += (1-w) * y[i]
     end
     return grid
 end
 
 # specialized code for 2 dimensions
 function linear_binning!(
-    grid::NamedTuple{(:g, :c, :d), Tuple{NTuple{2, R}, Array{T, 2}, Array{T, 2}}},
+    grid::GridData{T, 2, R},
     X::Matrix{T},
     y,
-) where {R, T <: Real}
+) where {R, T}
     @unpack g, c, d = grid
     Ilast = last(CartesianIndices(c))
     for i in eachindex(y)
@@ -117,26 +158,42 @@ function linear_binning!(
     return grid
 end
 
-@generated function linear_binning!(
-    grid::NamedTuple{(:g, :c, :d), Tuple{NTuple{N, R}, Array{T, N}, Array{T, N}}},
+# generic code for N dimensions
+function linear_binning!(
+    grid::GridData{T, N, R},
     X::Matrix{T},
     y,
-) where {N, R, T <: Real}
-    quote
-        power_combinations = @ncall $N Iterators.product i -> 0:1
-        ts = vec(collect(power_combinations))
-        for i in eachindex(y)
-            _linear_binning!(grid, view(X, i, :), y[i], ts, Val(N))
-        end
-        return grid
+) where {T, N, R}
+    @unpack g = grid
+    power_combinations = Base.splat(Iterators.product)(0:1 for _ in 1:N)
+    ts = vec(collect(power_combinations))
+    gmin = minimum.(g)
+    δ = step.(g)
+    for i in eachindex(y)
+        _linear_binning!(grid, view(X, i, :), y[i], gmin, δ, ts)
+    end
+    return grid
+end
+
+function _linear_binning!(grid::GridData{T, N, R}, X, y, gmin, δ, ts) where {T, N, R}
+    @unpack g, c, d = grid
+    L = ntuple(j -> togridindex(X[j], gmin[j], δ[j]), N)
+    𝓁 = ntuple(j -> floor(Int, L[j]), N)
+    r = ntuple(j -> 1 - (L[j] - 𝓁[j]), N)
+    w = ntuple(j -> prod(k -> ts[j][k] == 0 ? r[k] : 1-r[k], 1:N), 2^N)
+
+    for j in 1:2^N
+        I = CartesianIndex(𝓁) + CartesianIndex(ts[j])
+        c[I] += w[j]
+        d[I] += w[j] * y
     end
 end
 
 # TODO: combine different binning methods into one function
-function simple_binning(x, y; nbins=max(2, floor(Int, length(x)/100)))
+function simple_binning(x, y; nbins=guessbins(X))
     g = range(minimum(x), maximum(x), length=nbins)
     grid = (g = g, c = zero(g), d = zero(g))
-    linear_binning!(grid, x, y)
+    simple_binning!(grid, x, y)
 end
 
 function simple_binning!(grid, x, y)
@@ -149,3 +206,14 @@ function simple_binning!(grid, x, y)
     end
     return grid
 end
+
+
+function gridnodes(g::NTuple{1, R}) where {R}
+    return collect(first(g))
+end
+
+function gridnodes(g::NTuple{N, R}) where {N, R}
+    return map(SVector{N}, Iterators.product(g...))
+end
+
+gridnodes(grid::GridData) = gridnodes(grid.g)
