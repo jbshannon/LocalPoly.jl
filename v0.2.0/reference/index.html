@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API Reference · LocalPoly.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">LocalPoly.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>API Reference</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>API Reference</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/jbshannon/LocalPoly.jl/blob/main/docs/src/reference.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="API-Reference"><a class="docs-heading-anchor" href="#API-Reference">API Reference</a><a id="API-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#API-Reference" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.LocalPoly" href="#LocalPoly.LocalPoly"><code>LocalPoly.LocalPoly</code></a> — <span class="docstring-category">Module</span></header><section><div><p><strong>LocalPoly.jl</strong></p><p><a href="https://github.com/jbshannon/LocalPoly.jl/actions?query=workflows/CI"><img src="https://github.com/jbshannon/LocalPoly.jl/workflows/CI/badge.svg" alt="Build Status"/></a> <a href="https://jbshannon.github.io/LocalPoly.jl/stable"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt/></a> <a href="https://jbshannon.github.io/LocalPoly.jl/dev"><img src="https://img.shields.io/badge/docs-dev-blue.svg" alt/></a></p><p><code>LocalPoly.jl</code> is a Julia implementation of the local polynomial regression methods outlined in <a href="https://doi.org/10.1201/9780203748725">Fan and Gijbels (1996)</a>. This package is still experimental, and the API is subject to change.</p><p><strong>Overview</strong></p><p>This package provides the function <code>lpreg</code>, which computes the local polynomial regression coefficients for input data of any dimension. Since the local polynomial estimator is much faster over a grid of evenly-spaced data points, performance can be improved by first projecting the data to such a grid using the <code>linear_binning</code> function.</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs">using LocalPoly, Random
+Random.seed!(42)
+x = 2π * rand(1000)
+y = sin.(x) + randn(size(x))/4
+grid = linear_binning(x, y; nbins=100)
+β̂ = lpreg(grid)</code></pre><p>The first element of the coefficient vector represents the function estimate at the point of evaluation:</p><pre><code class="language-julia hljs">julia&gt; ŷ = first.(β̂)
+100-element Vector{Float64}:
+ -0.03070776997429395
+  0.048352477003287916
+  ⋮
+ -0.04452583837750935
+ -0.04543586963674676</code></pre><p>The estimation points can be recovered by using the <code>gridnodes</code> method:</p><pre><code class="language-julia hljs">julia&gt; v = gridnodes(grid)
+100-element Vector{Float64}:
+ 0.0005470440483675072
+ 0.06395994969485173
+ ⋮
+ 6.215011797403821
+ 6.278424703050305</code></pre><p>Plotting the fitted function values against the data:</p><pre><code class="language-julia hljs">using CairoMakie
+f = Figure()
+ax = Axis(f[1, 1])
+scatter!(ax, x, y; markersize=2, label=&quot;Data&quot;)
+lines!(ax, v, sin.(v); color=Cycled(2), label=&quot;True values&quot;)
+lines!(ax, v, ŷ; color=:tomato, linewidth=3, label=&quot;Fitted values&quot;)
+Legend(f[2, 1], ax; orientation=:horizontal, framevisible=false)
+current_figure()</code></pre><p><img src="./docs/src/images/readme/light/fit.svg#gh-light-mode-only" alt="Fit"/> <img src="./docs/src/images/readme/dark/fit.svg#gh-dark-mode-only" alt="Fit"/></p><p><strong>Standard Errors</strong></p><p>The bias and variance of the estimated coefficients can be estimated by fitting a &quot;pilot&quot;  model using a different bandwidth and higher-degree polynomial approximation (see documentation for details):</p><pre><code class="language-julia hljs">julia&gt; ci = confint(grid; α=0.05)
+100-element Vector{Tuple{Float64, Float64}}:
+ (-0.01564668938703559, 0.2698268678178526)
+ (0.04315971509904605, 0.22372303301848356)
+ (0.09309771887828536, 0.23823437533995848)
+ ⋮
+ (-0.24787454088605573, -0.024976639691117714)
+ (-0.2363528259834405, 0.04772308836500469)
+ (-0.3155131059523961, 0.12284688160121504)</code></pre><p>Adding the confidence intervals to the plot:</p><pre><code class="language-julia hljs">band!(ax, v, first.(ci), last.(ci); color=(:tomato, 0.3))
+current_figure()</code></pre><p><img src="./docs/src/images/readme/light/fit_ci.svg#gh-light-mode-only" alt="Fit with confidence interval"/> <img src="./docs/src/images/readme/dark/fit_ci.svg#gh-dark-mode-only" alt="Fit with confidence interval"/></p><p><strong>Derivative Estimation</strong></p><p>One of the advantages of the local polynomial estimator is its ability to nonparametrically estimate the derivatives of the regression function. To estimate the <span>$\nu$</span>-th derivative of the function, we simply fit a model with degree of at least <span>$\nu+1$</span>.</p><pre><code class="language-julia hljs">ν = 1
+degree = ν+1
+h = plugin_bandwidth(grid; ν)
+β̂1 = lpreg(grid; degree, h)
+ŷ′ = [b[ν+1] for b in β̂1]
+ci1 = confint(grid; ν, p=degree)
+
+fig, ax, sc = scatter(x, y; color=Cycled(1), markersize=3, label=&quot;Data&quot;)
+lines!(ax, v, cos.(v); label=&quot;True values&quot;)
+lines!(ax, v, ŷ′; linewidth=3, label=&quot;Fitted values&quot;)
+band!(ax, v, first.(ci1), last.(ci1); color=(:tomato, 0.3))
+Legend(fig[2, 1], ax; orientation=:horizontal)
+current_figure()</code></pre><p><img src="./docs/src/images/readme/light/fit_derivative.svg#gh-light-mode-only" alt="Fit derivative curve"/> <img src="./docs/src/images/readme/dark/fit_derivative.svg#gh-dark-mode-only" alt="Fit derivative curve"/></p><p>Fits can be improved with more sophisticated bandwidth selection techniques (TBD).</p><p><strong>Performance</strong></p><p>Set the number of observations to 100,000 and <span>$Y_i = \sin(X_i) + \varepsilon_i$</span> for <span>$X_i \in [0, 2\pi]$</span>. Evaluate the local polynomial estimator at 1,000 points.</p><pre><code class="language-julia hljs">using BenchmarkTools, LocalPoly
+x = 2π * rand(100_000)
+y = sin.(x) + randn(size(x))/10
+@btime grid = linear_binning($x, $y; nbins=1000)
+# 1.072 ms (2 allocations: 15.88 KiB)
+@btime h = plugin_bandwidth($grid)
+# 5.825 μs (14 allocations: 14.23 KiB)
+@btime lpreg($grid; h=$h)
+# 136.371 μs (392 allocations: 35.23 KiB)</code></pre><p><strong>R</strong></p><pre><code class="language-R hljs">library(KernSmooth)
+library(microbenchmark)
+x &lt;- 2*pi*runif(100000)
+y &lt;- sin(x) + rnorm(100000)/10
+v &lt;- seq(from = 0, to = 2*pi, length.out = 1000)
+h &lt;- dpill(x, y, gridsize = 1000, range.x = c(0, 2*pi))
+microbenchmark(&quot;KernSmooth&quot; = locpoly(x, y, bandwidth = h, gridsize = 1000, range.x = c(0, 2*pi)))</code></pre><p>Output:</p><pre><code class="nohighlight hljs">Unit: milliseconds
+       expr      min       lq     mean   median       uq      max neval
+ KernSmooth 2.062024 2.992719 3.506988 3.205222 3.713487 12.05903   100</code></pre><p><strong>Stata</strong></p><pre><code class="language-stata hljs">clear all
+qui set obs 100000
+gen x = 2*3.14159265*runiform()
+gen y = sin(x) + rnormal()/10
+forval i = 1/10 {
+    timer on `i&#39;
+    lpoly y x, n(1000) kernel(epan2) degree(1) nograph
+    timer off `i&#39;
+}
+timer list</code></pre><p>Output (measured in seconds):</p><pre><code class="nohighlight hljs">1:     14.59 /        1 =      14.5850
+2:     14.45 /        1 =      14.4500
+3:     14.07 /        1 =      14.0730
+4:     14.31 /        1 =      14.3090
+5:     14.44 /        1 =      14.4440
+6:     14.31 /        1 =      14.3120
+7:     14.06 /        1 =      14.0630
+8:     14.22 /        1 =      14.2160
+9:     14.33 /        1 =      14.3280
+10:     15.00 /        1 =      14.9980</code></pre><p><strong>MATLAB</strong></p><pre><code class="language-matlab hljs">x = rand(100000, 1);
+y = sin(x) + randn(100000, 1)/10;
+v = linspace(min(x), max(x), 1000);
+h = 0.087; % approximate plugin bandwidth
+
+T = 100; % number of benchmark trials to run
+tocs = zeros(T, 1);
+for i = 1:numel(tocs)
+    tic; lpreg(x, y, v, h); tocs(i) = toc;
+end
+fprintf(&#39;mean = %4.3f s\n std = %4.3f s\n&#39;, mean(tocs), std(tocs));
+
+function betas = lpreg(x, y, v, h)
+    X = [ones(size(x)) x];
+    betas = v;
+    for i = 1:numel(v)
+        d = x - v(i);
+        X(:, 2) = d;
+        w = kernelfunc(d/h)/h;
+        beta = inv(X&#39; * (w .* X))*(X&#39; * (w .* y));
+        betas(i) = beta(1);
+    end
+
+    function z = kernelfunc(u)
+        I = abs(u) &lt;= 1;
+        z = zeros(size(u));
+        z(I) = 3*(1-u(I).^2)/4;
+    end
+end</code></pre><p>Output:</p><pre><code class="nohighlight hljs">mean = 2.739 s
+ std = 0.130 s</code></pre><p><strong>References</strong></p><ol><li>Fan, J., &amp; Gijbels, I. (1996). Local Polynomial Modelling and its Applications (1st ed.). Chapman &amp; Hall.</li><li>Wand, M. P. (1994). Fast Computation of Multivariate Kernel Estimators. Journal of Computational and Graphical Statistics, 3(4), 433–445. https://doi.org/10.2307/1390904</li></ol><hr/><p><strong>Exports</strong></p><ul><li><a href="@ref"><code>confint</code></a></li><li><a href="@ref"><code>gridnodes</code></a></li><li><a href="@ref"><code>linear_binning</code></a></li><li><a href="@ref"><code>linear_binning!</code></a></li><li><a href="@ref"><code>lpreg</code></a></li><li><a href="@ref"><code>lpreg!</code></a></li><li><a href="#LocalPoly.plugin_bandwidth-Union{Tuple{T}, Tuple{AbstractVector{T}, AbstractVector{T}}} where T&lt;:Real"><code>plugin_bandwidth</code></a></li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/LocalPoly.jl#L1">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.𝐶" href="#LocalPoly.𝐶"><code>LocalPoly.𝐶</code></a> — <span class="docstring-category">Constant</span></header><section><div><p><code>Dict</code> containing the constant <span>$C_{\nu , p}(K)$</span> used for the plugin bandwidth</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/kernels.jl#L21">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.allmultiexponents-Tuple{Any, Any}" href="#LocalPoly.allmultiexponents-Tuple{Any, Any}"><code>LocalPoly.allmultiexponents</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">allmultiexponents(N, degree)</code></pre><p>All results of <code>Combinatorics.multiexponents(N, p)</code> for p ≤ degree.</p><p><strong>Examples</strong></p><p>```julia-repl julia&gt; multiexponents(2, 0) |&gt; collect 1-element Vector{Any}:  [0, 0]</p><p>julia&gt; multiexponents(2, 1) |&gt; collect 2-element Vector{Any}:  [1, 0]  [0, 1]</p><p>julia&gt; multiexponents(2, 2) |&gt; collect 3-element Vector{Any}:  [2, 0]  [1, 1]  [0, 2]</p><p>julia&gt; allmultiexponents(2, 2) 6-element Vector{Tuple{Int64, Int64}}:  (0, 0)  (1, 0)  (0, 1)  (2, 0)  (1, 1)  (0, 2) ````</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/polynomials.jl#L1-L32">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.gridsteps-Tuple{Any, Any, Any}" href="#LocalPoly.gridsteps-Tuple{Any, Any, Any}"><code>LocalPoly.gridsteps</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">gridsteps(g, h, τ)</code></pre><p>Compute the number of grid steps for which kernel weights are non-zero. <code>g</code> should be a <code>StepRange</code>.</p><p><span>$L = min { ⌊τδ/h⌋, M-1 }$</span></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/convolution.jl#L32-L38">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.outerproduct!-Union{Tuple{N}, Tuple{T}, Tuple{Array{T, N}, Any}} where {T, N}" href="#LocalPoly.outerproduct!-Union{Tuple{N}, Tuple{T}, Tuple{Array{T, N}, Any}} where {T, N}"><code>LocalPoly.outerproduct!</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">outerproduct!(A::Array{T, N}, xs) where {T, N}</code></pre><p>Compute the <code>N</code>-dimensional outer product of the vectors <code>xs</code>, modifying A in-place.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; xs = ([0, 1, 2], [1, 2, 3])
+([0, 1, 2], [1, 2, 3])
+
+julia&gt; A = xs[1] * xs[2]&#39;
+3×3 Matrix{Int64}:
+ 0  0  0
+ 1  2  3
+ 2  4  6
+
+julia&gt; fill!(A, 0)
+3×3 Matrix{Int64}:
+ 0  0  0
+ 0  0  0
+ 0  0  0
+
+julia&gt; outerproduct!(A, xs)
+3×3 Matrix{Int64}:
+ 0  0  0
+ 1  2  3
+ 2  4  6</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/convolution.jl#L46-L75">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.outerproduct-Union{Tuple{Tuple{Vararg{S, N}}}, Tuple{S}, Tuple{N}} where {N, S}" href="#LocalPoly.outerproduct-Union{Tuple{Tuple{Vararg{S, N}}}, Tuple{S}, Tuple{N}} where {N, S}"><code>LocalPoly.outerproduct</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">outerproduct(xs::NTuple{N, T}) where {N, T}</code></pre><p>Compute the <code>N</code>-dimensional outer product of the vectors <code>xs</code></p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; xs = ([0, 1, 2], [1, 2, 3])
+([0, 1, 2], [1, 2, 3])
+
+julia&gt; xs[1] * xs[2]&#39;
+3×3 Matrix{Int64}:
+ 0  0  0
+ 1  2  3
+ 2  4  6
+
+julia&gt; outerproduct(xs)
+3×3 Matrix{Int64}:
+ 0  0  0
+ 1  2  3
+ 2  4  6</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/convolution.jl#L87-L110">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.padκ!-Union{Tuple{N}, Tuple{T}, Tuple{Array{T, N}, Array{T, N}, Array{T, N}}} where {T, N}" href="#LocalPoly.padκ!-Union{Tuple{N}, Tuple{T}, Tuple{Array{T, N}, Array{T, N}, Array{T, N}}} where {T, N}"><code>LocalPoly.padκ!</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">padκ!(κᶻ::Array{T, N}, κ::Array{T, N}, tmp::Array{T, N}) where {T, N}</code></pre><p>Zero-pad and shift the convolution kernel, modifying <code>κᶻ</code> in-place.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/fft.jl#L28-L32">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.padκ-Union{Tuple{N}, Tuple{T}, Tuple{Array{T, N}, Array{T, N}}} where {T, N}" href="#LocalPoly.padκ-Union{Tuple{N}, Tuple{T}, Tuple{Array{T, N}, Array{T, N}}} where {T, N}"><code>LocalPoly.padκ</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">padκ(κ::Array{T, N}, tmp::Array{T, N}) where {T, N}</code></pre><p>Zero-pad and shift the convolution kernel.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/fft.jl#L39-L43">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.plugin_bandwidth-Union{Tuple{T}, Tuple{AbstractVector{T}, AbstractVector{T}}} where T&lt;:Real" href="#LocalPoly.plugin_bandwidth-Union{Tuple{T}, Tuple{AbstractVector{T}, AbstractVector{T}}} where T&lt;:Real"><code>LocalPoly.plugin_bandwidth</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">plugin_bandwidth(
+    x::AbstractArray{T&lt;:Real, 1},
+    y::AbstractArray{T&lt;:Real, 1};
+    ν,
+    p,
+    kernel,
+    W
+) -&gt; Any
+</code></pre><p>Estimate the rule-of-thumb plugin bandwidth.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/kernels.jl#L52">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.polybasis_grid-Tuple{Any, Any, Any}" href="#LocalPoly.polybasis_grid-Tuple{Any, Any, Any}"><code>LocalPoly.polybasis_grid</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">polybasis_grid(L, δ, p)</code></pre><p>Construct a polynomial basis of <code>L</code> steps of length <code>delta</code> and degree <code>p</code>.</p><p><span>$A[i, j] = ((j - (size(A, 2) ÷ 2 + 1)) * δ)^(i-1)$</span></p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; polybasis_grid(3, 0.5, 3)
+4×7 Matrix{Float64}:
+  1.0     1.0   1.0     1.0  1.0    1.0  1.0
+ -1.5    -1.0  -0.5    -0.0  0.5    1.0  1.5
+  2.25    1.0   0.25    0.0  0.25   1.0  2.25
+ -3.375  -1.0  -0.125  -0.0  0.125  1.0  3.375</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/convolution.jl#L1-L17">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.togridindex-Tuple{Any, Any, Any}" href="#LocalPoly.togridindex-Tuple{Any, Any, Any}"><code>LocalPoly.togridindex</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">togridindex(x, gmin, δ) = 1 + (x - gmin)/δ</code></pre><p>Transform the value <code>x</code> to an index into a grid with minimum <code>gmin</code> and step length <code>δ</code>.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; g = 0:0.1:1
+0.0:0.1:1.0
+
+julia&gt; gmin = minimum(g)
+0.0
+
+julia&gt; δ = step(g)
+0.1
+
+julia&gt; i = togridindex(0.5, gmin, δ)
+6.0
+
+julia&gt; collect(g)[Int(i)] == 0.5
+true
+
+julia&gt; fractional_index = togridindex(2^(-1/2), gmin, δ)
+8.071067811865476</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/binning.jl#L1-L27">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="LocalPoly.togridindex-Tuple{Any, Any}" href="#LocalPoly.togridindex-Tuple{Any, Any}"><code>LocalPoly.togridindex</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">togridindex(x, g::AbstractRange)</code></pre><p>Transform the value <code>x</code> to an index into the range <code>g</code>. This method is ~3 times slower than the direct method, so repeated calls should pre-compute the range minimum and step.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; g = 0:0.1:1
+0.0:0.1:1.0
+
+julia&gt; i = togridindex(0.5, g)
+6.0
+
+julia&gt; collect(g)[Int(i)] == 0.5
+true
+
+julia&gt; fractional_index = togridindex(2^(-1/2), gmin, δ)
+8.071067811865476</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jbshannon/LocalPoly.jl/blob/7f7e58e443f9e5347a721ce292ebc6ce514ebdf0/src/binning.jl#L30-L50">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Wednesday 2 August 2023 14:37">Wednesday 2 August 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
