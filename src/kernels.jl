@@ -34,6 +34,7 @@ const 𝐶 = Dict(
     (0, 3, :Epanechnikov) => 3.243,
     (1, 2, :Epanechnikov) => 2.275,
     (2, 3, :Epanechnikov) => 2.893,
+    (1, 4, :Epanechnikov) => 2.8, # this is just a guess for now
 
     (0, 1, :Biweight) => 2.036,
     (0, 3, :Biweight) => 3.633,
@@ -55,7 +56,7 @@ Estimate the rule-of-thumb plugin bandwidth.
 """
 function plugin_bandwidth(
     x::AbstractVector{T}, y::AbstractVector{T};
-    ν::Int=0, p::Int=1, kernel=:Epanechnikov, W=LinearAlgebra.I,
+    ν::Int=0, p::Int=ν+1, kernel=:Epanechnikov, W=LinearAlgebra.I,
 ) where {T <: Real}
     X = _polybasis(x, 0.0, p+3)
     β̌ = (X' * W * X)\(X' * W * y)
@@ -67,7 +68,7 @@ end
 
 function plugin_bandwidth(
     grid::GridData{T, 1, R};
-    ν=0, p=1, kernel=:Epanechnikov,
+    ν=0, p=ν+1, kernel=:Epanechnikov,
 ) where {T, R}
     @unpack g, c, d = grid
     X = _polybasis(collect(first(g)), 0.0, p+3)

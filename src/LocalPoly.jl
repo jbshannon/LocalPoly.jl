@@ -21,8 +21,10 @@ using StatsBase
 
 import Base.show
 
-export lpreg!, lpreg
+export linear_binning, linear_binning!, gridnodes
 export plugin_bandwidth
+export lpreg!, lpreg
+export confint
 
 include("binning.jl")
 include("kernels.jl")
@@ -30,6 +32,7 @@ include("polynomials.jl")
 include("regression.jl")
 include("convolution.jl")
 include("fft.jl")
+include("MSE.jl")
 
 function lpreg(
     y, x;

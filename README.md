@@ -8,7 +8,7 @@
 
 ## Overview
 
-This package provides the function `lpreg`, which computes the local polynomial regression coefficients and standard errors at a vector of evaluation knots. This function also (optionally) implements the linear binning method to speed up the computations by reducing the dimensionality of the data. The number of bins is controlled by the keyword argument  `nbins` (set to 0 for no binning).
+This package provides the function `lpreg`, which computes the local polynomial regression coefficients for input data of any dimension. Since the local polynomial estimator is much faster over a grid of evenly-spaced data points, performance can be improved by first projecting the data to such a grid using the `linear_binning` function.
 
 ## Examples
 
@@ -17,8 +17,8 @@ using LocalPoly, Random
 Random.seed!(42)
 x = 2π * rand(1000)
 y = sin.(x) + randn(size(x))/4
-v = range(0, 2π, length=100)
-β̂ = lpreg(x, y, v; nbins=100)
+grid = linear_binning(x, y; nbins=100)
+β̂ = lpreg(grid)
 ```
 
 The first element of the coefficient vector represents the function estimate at the point of evaluation:
@@ -33,14 +33,26 @@ julia> ŷ = first.(β̂)
  -0.04543586963674676
 ```
 
+The estimation points can be recovered by using the `gridnodes` method:
+
+```julia
+julia> v = gridnodes(grid)
+100-element Vector{Float64}:
+ 0.0005470440483675072
+ 0.06395994969485173
+ ⋮
+ 6.215011797403821
+ 6.278424703050305
+```
+
 Plotting the fitted function values against the data:
 
 ```julia
 using CairoMakie
 f = Figure()
 ax = Axis(f[1, 1])
-scatter!(ax, x, y; markersize=3, label="Data")
-lines!(ax, v, sin.(v); color=:darkgreen, label="True values")
+scatter!(ax, x, y; markersize=2, label="Data")
+lines!(ax, v, sin.(v); color=Cycled(2), label="True values")
 lines!(ax, v, ŷ; color=:tomato, linewidth=3, label="Fitted values")
 Legend(f[2, 1], ax; orientation=:horizontal, framevisible=false)
 current_figure()
@@ -49,57 +61,58 @@ current_figure()
 ![Fit](./docs/src/images/readme/light/fit.svg#gh-light-mode-only)
 ![Fit](./docs/src/images/readme/dark/fit.svg#gh-dark-mode-only)
 
-Alternatively, a `LPModel` object can be constructed to first bin the data before running the regression with the `lpreg!` method:
-
-```julia
-julia> 𝐌 = LPModel(x, y, 1; nbins=100)
-LPModel{Float64}
-        Degree: 1
-  Observations: 1000
-          Bins: 100
-
-julia> β̃ = lpreg!(𝐌, v);
-
-julia> ỹ = first.(β̃);
-
-julia> ỹ == ŷ
-true
-```
-
 ### Standard Errors
 
-The conditional variance-covariance matrix can be computed along with the coefficient estimates at each evaluation point by using the keyword argument `se=true`.
+The bias and variance of the estimated coefficients can be estimated by fitting a "pilot" 
+model using a different bandwidth and higher-degree polynomial approximation (see
+documentation for details):
 
 ```julia
-julia> β̂, V̂ = lpreg(x, y, v; nbins=100, se=true);
-
-julia> V̂[1]
-2×2 SMatrix{2, 2, Float64, 4} with indices SOneTo(2)×SOneTo(2):
-  0.0250571  -0.169832
- -0.169832    1.85631
-
-julia> σ̂ = map(V -> sqrt(V[1, 1]), V̂)
-100-element Vector{Float64}:
- 0.15829439002638532
- 0.10565459771497485
- 0.08285173519350204
+julia> ci = confint(grid; α=0.05)
+100-element Vector{Tuple{Float64, Float64}}:
+ (-0.01564668938703559, 0.2698268678178526)
+ (0.04315971509904605, 0.22372303301848356)
+ (0.09309771887828536, 0.23823437533995848)
  ⋮
- 0.08866937970971286
- 0.11655671525900956
- 0.17517857236448717
+ (-0.24787454088605573, -0.024976639691117714)
+ (-0.2363528259834405, 0.04772308836500469)
+ (-0.3155131059523961, 0.12284688160121504)
 ```
 
-We can use this to add a confidence interval to the plot:
+Adding the confidence intervals to the plot:
 
 ```julia
-using Distributions
-tᶜ = quantile(TDist(100-2), 1-0.05/2)
-band!(ax, v, ŷ - tᶜ*σ̂, ŷ + tᶜ*σ̂; color=(:tomato, 0.3))
+band!(ax, v, first.(ci), last.(ci); color=(:tomato, 0.3))
 current_figure()
 ```
 
 ![Fit with confidence interval](./docs/src/images/readme/light/fit_ci.svg#gh-light-mode-only)
 ![Fit with confidence interval](./docs/src/images/readme/dark/fit_ci.svg#gh-dark-mode-only)
+
+### Derivative Estimation
+
+One of the advantages of the local polynomial estimator is its ability to nonparametrically estimate the derivatives of the regression function. To estimate the $\nu$-th derivative of the function, we simply fit a model with degree of at least $\nu+1$.
+
+```julia
+ν = 1
+degree = ν+1
+h = plugin_bandwidth(grid; ν)
+β̂1 = lpreg(grid; degree, h)
+ŷ′ = [b[ν+1] for b in β̂1]
+ci1 = confint(grid; ν, p=degree)
+
+fig, ax, sc = scatter(x, y; color=Cycled(1), markersize=3, label="Data")
+lines!(ax, v, cos.(v); label="True values")
+lines!(ax, v, ŷ′; linewidth=3, label="Fitted values")
+band!(ax, v, first.(ci1), last.(ci1); color=(:tomato, 0.3))
+Legend(fig[2, 1], ax; orientation=:horizontal)
+current_figure()
+```
+
+![Fit derivative curve](./docs/src/images/readme/light/fit_derivative.svg#gh-light-mode-only)
+![Fit derivative curve](./docs/src/images/readme/dark/fit_derivative.svg#gh-dark-mode-only)
+
+Fits can be improved with more sophisticated bandwidth selection techniques (TBD).
 
 ## Performance
 
@@ -109,11 +122,12 @@ Set the number of observations to 100,000 and $Y_i = \sin(X_i) + \varepsilon_i$ 
 using BenchmarkTools, LocalPoly
 x = 2π * rand(100_000)
 y = sin.(x) + randn(size(x))/10
-v = range(minimum(x), maximum(x), length=1000)
-@btime h = plugin_bandwidth($x, $y)
-# 2.701 ms (14 allocations: 6.10 MiB)
-@btime lpreg($x, $y, $v; h=$h)
-# 11.204 ms (9563 allocations: 442.02 KiB)
+@btime grid = linear_binning($x, $y; nbins=1000)
+# 1.072 ms (2 allocations: 15.88 KiB)
+@btime h = plugin_bandwidth($grid)
+# 5.825 μs (14 allocations: 14.23 KiB)
+@btime lpreg($grid; h=$h)
+# 136.371 μs (392 allocations: 35.23 KiB)
 ```
 
 ### R
@@ -205,3 +219,4 @@ mean = 2.739 s
 ## References
 
 1. Fan, J., & Gijbels, I. (1996). Local Polynomial Modelling and its Applications (1st ed.). Chapman & Hall.
+2. Wand, M. P. (1994). Fast Computation of Multivariate Kernel Estimators. Journal of Computational and Graphical Statistics, 3(4), 433–445. https://doi.org/10.2307/1390904
