@@ -1,4 +1,4 @@
-@testset "Kernels" begin
+@testset verbose=true "Kernels" begin
     x = -10:0.0001:10
     kernels = [
         :Uniform,
