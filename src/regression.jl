@@ -26,7 +26,7 @@ function RegressionData(y::Vector{T}, x::Vector{SVector{N, T}}, degree) where {N
     X = ones(T, length(x), J)
     xcols = N > 1 ? (2:1+N) : 2
     x̂ = [view(X, i, xcols) for i in axes(X, 1)]
-    w = vec(c)
+    w = copy(vec(c))
     W = Diagonal(w)
     WX = W * X
     XWX = MMatrix{J, J}(WX'X)
