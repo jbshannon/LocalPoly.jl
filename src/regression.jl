@@ -140,7 +140,7 @@ end
 function lpreg!(
     𝐑::RegressionData, v;
     kernel=:Epanechnikov,
-    h=plugin_bandwidth(𝐌.x, 𝐌.y; ν=max(size(𝐌.X, 2)-2, 0), p=size(𝐌.X, 2)-1, kernel)
+    h=plugin_bandwidth(𝐑.x, 𝐑.y; ν=max(size(𝐑.X, 2)-2, 0), p=size(𝐑.X, 2)-1, kernel)
 )
     return map(x₀ -> _lpreg!(𝐑, x₀, h; kernel=Val(kernel)), v)
 end
