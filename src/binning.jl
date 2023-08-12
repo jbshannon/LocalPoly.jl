@@ -105,7 +105,7 @@ function linear_binning(
     nbins=guessbins(X),
 ) where {N, T}
     g = ntuple(Val(N)) do j
-        Xj = X[j]
+        Xj = getindex.(X, j)
         n = nbins[j]
         range(minimum(Xj), maximum(Xj), length=n)
     end
@@ -147,6 +147,44 @@ function linear_binning!(
         r1 = 1 - (L1 - 𝓁1)
 
         L2 = togridindex(X[i, 2], g[2])
+        𝓁2 = floor(Int, L2)
+        r2 = 1 - (L2 - 𝓁2)
+
+        w = r1 * r2
+        c[𝓁1, 𝓁2] += w
+        d[𝓁1, 𝓁2] += w * y[i]
+
+        w = (1 - r1) * r2
+        I𝓁 = min(CartesianIndex(𝓁1+1, 𝓁2), Ilast)
+        c[I𝓁] += w
+        d[I𝓁] += w * y[i]
+
+        w = r1 * (1 - r2)
+        I𝓁 = min(CartesianIndex(𝓁1, 𝓁2+1), Ilast)
+        c[I𝓁] += w
+        d[I𝓁] += w * y[i]
+
+        w = (1 - r1) * (1 - r2)
+        I𝓁 = min(CartesianIndex(𝓁1+1, 𝓁2+1), Ilast)
+        c[I𝓁] += w
+        d[I𝓁] += w * y[i]
+    end
+    return grid
+end
+
+function linear_binning!(
+    grid::GridData{T, 2, R},
+    X::Vector{SVector{2, T}},
+    y,
+) where {R, T}
+    @unpack g, c, d = grid
+    Ilast = last(CartesianIndices(c))
+    for i in eachindex(y)
+        L1 = togridindex(X[i][1], g[1])
+        𝓁1 = floor(Int, L1)
+        r1 = 1 - (L1 - 𝓁1)
+
+        L2 = togridindex(X[i][2], g[2])
         𝓁2 = floor(Int, L2)
         r2 = 1 - (L2 - 𝓁2)
 

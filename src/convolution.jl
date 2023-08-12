@@ -152,7 +152,7 @@ function ConvolutionData(
     kernelweights = map(u -> Kₕ(Val(kernel), u, h), gridnodes(Arows))
 
     multexp = allmultiexponents(N, 2degree)
-    kernels = ntuple(i -> fillκ(A, kernelweights, multexp[i]), length(multexp))
+    kernels = map(k -> fillκ(A, kernelweights, k), multexp)
     s̃ = zeros(T, M..., length(multexp))
     t̃ = zeros(T, M..., count(<=(degree) ∘ sum, multexp))
     return ConvolutionData(grid, A, degree, multexp, kernels, s̃, t̃)
@@ -169,6 +169,7 @@ end
 
 gridsteps(kernel) = ntuple(i -> (size(kernel, i)-1)÷2, ndims(kernel))
 gridsteps(kernels::NTuple{N, T}) where {N, T} = gridsteps(first(kernels))
+gridsteps(C::ConvolutionData) = gridsteps(first(C.kernels))
 
 function convolve!(C, A, B)
     Bmid = CartesianIndices(B)[length(B)÷2+1]
