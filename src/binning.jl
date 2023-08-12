@@ -86,13 +86,27 @@ function guessbins(X)
 end
 
 function linear_binning(
-    X::Array{T, N}, y::Vector{T};
+    X::Array{T, S}, y::Vector{T};
     nbins=guessbins(X),
-) where {N, T}
+) where {T, S}
+    N = size(X, 2)
     g = ntuple(Val(N)) do j
         Xj = view(X, :, j)
         n = nbins[j]
-        # δ = (maximum(Xj) - minimum(Xj))/(n-2)
+        range(minimum(Xj), maximum(Xj), length=n)
+    end
+    M = length.(g)
+    grid = GridData(g, zeros(T, M), zeros(T, M))
+    linear_binning!(grid, X, y)
+end
+
+function linear_binning(
+    X::Vector{SVector{N, T}}, y::Vector{T};
+    nbins=guessbins(X),
+) where {N, T}
+    g = ntuple(Val(N)) do j
+        Xj = X[j]
+        n = nbins[j]
         range(minimum(Xj), maximum(Xj), length=n)
     end
     M = length.(g)
