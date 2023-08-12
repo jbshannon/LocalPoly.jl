@@ -152,7 +152,7 @@ function ConvolutionData(
     kernelweights = map(u -> Kₕ(Val(kernel), u, h), gridnodes(Arows))
 
     multexp = allmultiexponents(N, 2degree)
-    kernels = map(k -> fillκ(A, kernelweights, k), multexp)
+    kernels = ntuple(i -> fillκ(A, kernelweights, multexp[i]), length(multexp))
     s̃ = zeros(T, M..., length(multexp))
     t̃ = zeros(T, M..., count(<=(degree) ∘ sum, multexp))
     return ConvolutionData(grid, A, degree, multexp, kernels, s̃, t̃)
