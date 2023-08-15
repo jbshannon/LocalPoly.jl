@@ -61,6 +61,12 @@ struct GridData{T <: Real, N, R <: AbstractRange{T}}
     d::Array{T, N}
 end
 
+function GridData(g::NTuple{N, R}) where {N, R}
+    T = eltype(first(g))
+    M = length.(g)
+    return GridData(g, zeros(T, M...), zeros(T, M...))
+end
+
 function show(io::IO, G::GridData{T, N, R}) where {T, N, R}
     @unpack g = G
     println(io, typeof(G))
