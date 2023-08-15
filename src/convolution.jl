@@ -202,7 +202,11 @@ function finalstep(s̃, t̃, multexp)
     colons = ntuple(i -> Base.Colon(), length(first(multexp)))
     map(CartesianIndices(view(s̃, colons..., 1))) do I
         copyto!(XWX, view(s̃, Tuple(I)..., MI))
-        return lu(XWX) \ view(t̃, Tuple(I)..., :)
+        if det(XWX) > 1e-5
+            return lu(XWX) \ view(t̃, Tuple(I)..., :)
+        else
+            return SVector{p}(zeros(eltype(t̃), p))
+        end
     end
 end
 
