@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · LocalPoly.jl</title><meta name="title" content="Home · LocalPoly.jl"/><meta property="og:title" content="Home · LocalPoly.jl"/><meta property="twitter:title" content="Home · LocalPoly.jl"/><meta name="description" content="Documentation for LocalPoly.jl."/><meta property="og:description" content="Documentation for LocalPoly.jl."/><meta property="twitter:description" content="Documentation for LocalPoly.jl."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>LocalPoly.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#Local-Polynomial-Regression"><span>Local Polynomial Regression</span></a></li><li><a class="tocitem" href="#Examples"><span>Examples</span></a></li><li><a class="tocitem" href="#Performance"><span>Performance</span></a></li></ul></li><li><a class="tocitem" href="reference/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/jbshannon/LocalPoly.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/jbshannon/LocalPoly.jl/blob/main/docs/src/index.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="LocalPoly.jl"><a class="docs-heading-anchor" href="#LocalPoly.jl">LocalPoly.jl</a><a id="LocalPoly.jl-1"></a><a class="docs-heading-anchor-permalink" href="#LocalPoly.jl" title="Permalink"></a></h1><p><code>LocalPoly.jl</code> is a Julia implementation of the local polynomial regression methods outlined in <a href="https://doi.org/10.1201/9780203748725">Fan and Gijbels (1996)</a>. This package is still experimental, and the API is subject to change.</p><h2 id="Local-Polynomial-Regression"><a class="docs-heading-anchor" href="#Local-Polynomial-Regression">Local Polynomial Regression</a><a id="Local-Polynomial-Regression-1"></a><a class="docs-heading-anchor-permalink" href="#Local-Polynomial-Regression" title="Permalink"></a></h2><p>Local polynomial regression is a non-parametric estimation technique that can be used to estimate both the conditional mean function and its derivatives.</p><p>Let <span>$(X_i, Y_i)_{i=1}^N$</span> be observations (for sake of exposition assumed identically and independently distributed) of the random variables <span>$(X,Y)$</span>. Let <span>$m(x)$</span> be the conditional mean function:</p><p class="math-container">\[m(x) = E[Y|X=x]\]</p><p>The conditional mean function <span>$m(x)$</span> can be approximated in a neighborhood of any point <span>$x_0$</span> by a Taylor expansion of degree <span>$p$</span>:</p><p class="math-container">\[m(x) \approx \sum_{j=0}^p \frac{m^{(p)}(x_0)}{j!}(x - x_0)^j\]</p><p>This suggests an estimator using the Taylor approximation with weighted data. Let <span>$K(\cdot)$</span> be a valid kernel function, and <span>$h$</span> the bandwidth or smoothing parameter. Denote <span>$K_h(\cdot) = K(\cdot/h)/h$</span>. The locally weighted sum of squared errors is:</p><p class="math-container">\[\sum_{i=1}^N\left[ Y_i - \sum_{j=0}^p \beta_j \left(X_i - x_0\right)^j\right]^2 K_h(X_i - x_0)\]</p><p>Let <span>$\widehat\beta \: (j=0,\ldots,p)$</span> be the <span>$\beta$</span> minimizing the above expression. Then the <span>$\nu$</span>-th derivative of the conditional mean function evaluated at <span>$x_0$</span> is:</p><p class="math-container">\[\widehat m_\nu(x_0) = \nu! \widehat\beta_\nu\]</p><h3 id="Matrix-Notation"><a class="docs-heading-anchor" href="#Matrix-Notation">Matrix Notation</a><a id="Matrix-Notation-1"></a><a class="docs-heading-anchor-permalink" href="#Matrix-Notation" title="Permalink"></a></h3><p>The local polynomial estimator can be conveniently expressed using matrix notation. Define the matrices:</p><p class="math-container">\[\mathbf X = \left( \begin{matrix} 1 &amp; (X_1 - x_0) &amp; \cdots &amp; (X_1 - x_0)^p \\ \vdots &amp; \vdots &amp; &amp; \vdots \\ 1 &amp; (X_N - x_0) &amp; \cdots &amp; (X_N - x_0)^p \end{matrix} \right)\]</p><p class="math-container">\[\mathbf y = \left(
+    \begin{matrix}
+        Y_1 \\
+        \vdots \\
+        Y_N
+    \end{matrix}
+\right)\]</p><p class="math-container">\[\mathbf W = \text{diag} \left\{ K_h(X_i - x_0) \right\}\]</p><p>Then the weighted sum of squared errors is given by:</p><p class="math-container">\[\left(\mathbf y - \mathbf X \beta \right)^\prime \mathbf W \left(\mathbf y - \mathbf X \beta \right)\]</p><p>The unique minimizer <span>$\widehat\beta$</span> is then:</p><p class="math-container">\[\widehat \beta = \left( \mathbf X^\prime \mathbf W \mathbf X \right)^{-1} \mathbf X^\prime \mathbf W \mathbf y\]</p><h2 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h2><pre><code class="language-julia-repl hljs">julia&gt; using LocalPoly
+
+julia&gt; x = 2π * rand(1000);
+
+julia&gt; y = sin.(x) + randn(size(x))/4;
+
+julia&gt; v = range(0, 2π, length=100);
+
+julia&gt; β̂ = lpreg(x, y, v; nbins=100)
+100-element Vector{SVector{2, Float64}}:
+ [-0.03070776997429395, 1.2231391275083123]
+ [0.048352477003287916, 1.1570071796231207]
+ ⋮
+ [-0.04452583837750935, 0.7419062295509331]
+ [-0.04543586963674676, 0.28981667874915656]</code></pre><p>The first element of the coefficient vector represents the function estimate <span>$\widehat m (v)$</span>:</p><pre><code class="language-julia-repl hljs">julia&gt; ŷ = first.(β̂)
+100-element Vector{Float64}:
+ -0.03070776997429395
+  0.048352477003287916
+  ⋮
+ -0.04452583837750935
+ -0.04543586963674676</code></pre><p>Plotting the fitted function values against the data:</p><pre><code class="language-julia hljs">using CairoMakie
+f = Figure()
+ax = Axis(f[1, 1])
+scatter!(ax, x, y; markersize=3, label=&quot;Data&quot;)
+lines!(ax, v, sin.(v); color=:darkgreen, label=&quot;True values&quot;)
+lines!(ax, v, ŷ; color=:tomato, linewidth=3, label=&quot;Fitted values&quot;)
+Legend(f[2, 1], ax; orientation=:horizontal, framevisible=false)
+current_figure()</code></pre><p><img src="images/example/fit.svg" alt="Fit"/></p><p>Alternatively, a <code>LPModel</code> object can be constructed to first bin the data before running the regression with the <code>lpreg!</code> method:</p><pre><code class="language-julia-repl hljs">julia&gt; 𝐌 = LPModel(x, y, 1; nbins=100)
+LPModel{Float64}
+        Degree: 1
+  Observations: 1000
+          Bins: 100
+
+julia&gt; β̃ = lpreg!(𝐌, v);
+
+julia&gt; ỹ = first.(β̃);
+
+julia&gt; ỹ == ŷ
+true</code></pre><h3 id="Standard-Errors"><a class="docs-heading-anchor" href="#Standard-Errors">Standard Errors</a><a id="Standard-Errors-1"></a><a class="docs-heading-anchor-permalink" href="#Standard-Errors" title="Permalink"></a></h3><p>The conditional variance-covariance matrix can be computed along with the coefficient estimates at each evaluation point by using the keyword argument <code>se=true</code>.</p><pre><code class="language-julia-repl hljs">julia&gt; β̂, V̂ = lpreg(x, y, v; nbins=100, se=true);
+
+julia&gt; V̂[1]
+2×2 SMatrix{2, 2, Float64, 4} with indices SOneTo(2)×SOneTo(2):
+  0.0338293  -0.207557
+ -0.207557    1.82918
+
+julia&gt; σ̂ = map(V -&gt; sqrt(V[1, 1]), V̂)
+100-element Vector{Float64}:
+ 0.18392746694896067
+ 0.12325024737108828
+ 0.09069661552755462
+ 0.0769932404992409
+ ⋮
+ 0.08852952186657372
+ 0.11884976257937468
+ 0.1795255766016528</code></pre><p>We can use this to add a confidence interval to the plot:</p><pre><code class="language-julia hljs">using Distributions
+tᶜ = quantile(TDist(100-2), 1-0.05/2)
+band!(ax, v, ŷ - tᶜ*σ̂, ŷ + tᶜ*σ̂; color=(:tomato, 0.3))
+current_figure()</code></pre><p><img src="images/example/fit_ci.svg" alt="Fit with confidence interval"/></p><h2 id="Performance"><a class="docs-heading-anchor" href="#Performance">Performance</a><a id="Performance-1"></a><a class="docs-heading-anchor-permalink" href="#Performance" title="Permalink"></a></h2><p>Set the number of observations <span>$N=100, \! 000$</span> and <span>$Y_i = \sin(X_i) + \varepsilon_i$</span> for <span>$X_i \in [0, 2\pi]$</span>. Evaluate the local polynomial estimator at <span>$1, \! 000$</span> points.</p><pre><code class="language-julia-repl hljs">julia&gt; using BenchmarkTools, LocalPoly
+
+julia&gt; x = 2π * rand(100_000);
+
+julia&gt; y = sin.(x) + randn(size(x))/10;
+
+julia&gt; v = range(minimum(x), maximum(x), length=1000);
+
+julia&gt; @btime lpreg($x, $y, $v);
+  164.850 ms (6506550 allocations: 115.18 MiB)</code></pre><h3 id="R"><a class="docs-heading-anchor" href="#R">R</a><a id="R-1"></a><a class="docs-heading-anchor-permalink" href="#R" title="Permalink"></a></h3><pre><code class="language-R hljs">library(KernSmooth)
+library(microbenchmark)
+x &lt;- 2*pi*runif(100000)
+y &lt;- sin(x) + rnorm(100000)/10
+v &lt;- seq(from = 0, to = 2*pi, length.out = 1000)
+h &lt;- dpill(x, y, gridsize = 1000, range.x = c(0, 2*pi))
+microbenchmark(&quot;Local linear&quot; = {locpoly(x, y, bandwidth = h, gridsize = 1000, range.x = c(0, 2*pi))})</code></pre><p>Output:</p><pre><code class="nohighlight hljs">Unit: milliseconds
+         expr      min       lq    mean   median       uq      max neval
+ Local linear 2.150457 2.262588 2.61474 2.377186 2.598788 5.300715   100</code></pre><h3 id="Stata"><a class="docs-heading-anchor" href="#Stata">Stata</a><a id="Stata-1"></a><a class="docs-heading-anchor-permalink" href="#Stata" title="Permalink"></a></h3><pre><code class="language-stata hljs">clear all
+qui set obs 100000
+gen x = 2*3.14159265*runiform()
+gen y = sin(x) + rnormal()/10
+forval i = 1/10 {
+    timer on `i&#39;
+    lpoly y x, n(1000) kernel(epan2) degree(1) nograph
+    timer off `i&#39;
+}
+timer list</code></pre><p>Output (measured in seconds):</p><pre><code class="nohighlight hljs">1:     14.59 /        1 =      14.5850
+2:     14.45 /        1 =      14.4500
+3:     14.07 /        1 =      14.0730
+4:     14.31 /        1 =      14.3090
+5:     14.44 /        1 =      14.4440
+6:     14.31 /        1 =      14.3120
+7:     14.06 /        1 =      14.0630
+8:     14.22 /        1 =      14.2160
+9:     14.33 /        1 =      14.3280
+10:     15.00 /        1 =      14.9980</code></pre><h3 id="MATLAB"><a class="docs-heading-anchor" href="#MATLAB">MATLAB</a><a id="MATLAB-1"></a><a class="docs-heading-anchor-permalink" href="#MATLAB" title="Permalink"></a></h3><pre><code class="language-matlab hljs">x = rand(100000, 1);
+y = sin(x) + randn(100000, 1)/10;
+v = linspace(min(x), max(x), 1000);
+h = 0.087; % approximate plugin bandwidth
+
+T = 100; % number of benchmark trials to run
+tocs = zeros(T, 1);
+for i = 1:numel(tocs)
+    tic; lpreg(x, y, v, h); tocs(i) = toc;
+end
+fprintf(&#39;mean = %4.3f s\n std = %4.3f s\n&#39;, mean(tocs), std(tocs));
+
+function betas = lpreg(x, y, v, h)
+    X = [ones(size(x)) x];
+    betas = v;
+    for i = 1:numel(v)
+        d = x - v(i);
+        X(:, 2) = d;
+        w = kernelfunc(d/h)/h;
+        beta = inv(X&#39; * (w .* X))*(X&#39; * (w .* y));
+        betas(i) = beta(1);
+    end
+
+    function z = kernelfunc(u)
+        I = abs(u) &lt;= 1;
+        z = zeros(size(u));
+        z(I) = 3*(1-u(I).^2)/4;
+    end
+end</code></pre><p>Output:</p><pre><code class="nohighlight hljs">mean = 2.739 s
+ std = 0.130 s</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="reference/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Thursday 29 February 2024 18:47">Thursday 29 February 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
