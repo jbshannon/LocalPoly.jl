@@ -125,10 +125,20 @@ function _find_idxbw(𝐌)
     return (1+length(x))÷2 - findfirst(>(0), x)
 end
 
+"""
+$(SIGNATURES)
+
+Local polynomial regression, modifying a `LPGridModel`.
+"""
 function lpreg!(𝐌::LPGridModel; idxbw=_find_idxbw(𝐌))
     return [_lpreg!(𝐌, i; idxbw) for i in eachindex(𝐌.g)]
 end
 
+"""
+$(SIGNATURES)
+
+Local polynomial regression, constructing a `LPGridModel` from the data.
+"""
 function lpreg(
     x::AbstractVector,
     y::AbstractVector;

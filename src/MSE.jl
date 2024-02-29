@@ -72,6 +72,11 @@ function _tcrit(𝐑::RegressionData, h; α=0.05, kernel=:Epanechnikov)
     end
 end
 
+"""
+$(SIGNATURES)
+
+Generate a confindence interval.
+"""
 function confint(
     grid::GridData{T, 1, R};
     ν=0, p=ν+1, a=2, α=0.05,

@@ -1,7 +1,4 @@
 """
-$(README)
-
----
 ## Exports
 $(EXPORTS)
 """
@@ -34,6 +31,11 @@ include("convolution.jl")
 include("fft.jl")
 include("MSE.jl")
 
+"""
+$(SIGNATURES)
+
+Local polynomial regression, constructing a `LPGridModel` from the data.
+"""
 function lpreg(
     y, x;
     degree=1,

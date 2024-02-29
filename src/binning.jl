@@ -91,6 +91,11 @@ function guessbins(X)
     return ntuple(i -> max(2, N), size(X, 2))
 end
 
+"""
+$(SIGNATURES)
+
+Linear binning algorithm for fast computation.
+"""
 function linear_binning(
     X::Array{T, S}, y::Vector{T};
     nbins=guessbins(X),
@@ -217,6 +222,11 @@ function linear_binning!(
 end
 
 # generic code for N dimensions
+"""
+$(SIGNATURES)
+
+Linear binning algorithm for fast computation.
+"""
 function linear_binning!(
     grid::GridData{T, N, R},
     X::Matrix{T},
@@ -265,7 +275,11 @@ function simple_binning!(grid, x, y)
     return grid
 end
 
+"""
+$(SIGNATURES)
 
+Access nodes of gridded data.
+"""
 function gridnodes(g::NTuple{1, R}) where {R}
     return collect(first(g))
 end

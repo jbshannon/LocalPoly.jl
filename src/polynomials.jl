@@ -4,6 +4,7 @@
 All results of `Combinatorics.multiexponents(N, p)` for p ≤ degree.
 
 ## Examples
+
 ```julia-repl
 julia> multiexponents(2, 0) |> collect
 1-element Vector{Any}:
@@ -28,7 +29,7 @@ julia> allmultiexponents(2, 2)
  (2, 0)
  (1, 1)
  (0, 2)
-````
+```
 """
 function allmultiexponents(N, degree)
     multexp = NTuple{N, Int64}[]

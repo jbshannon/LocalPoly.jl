@@ -137,6 +137,11 @@ function _lpreg!(𝐑::RegressionData, x₀, h; kernel=Val(:Epanechnikov))
     return _lpreg!(𝐑, y, c, w, x̂, x, W, X, WX, XWX, XWY, x₀, h; kernel)
 end
 
+"""
+$(SIGNATURES)
+
+Local polynomial regression, modifying a `LPGridModel`.
+"""
 function lpreg!(
     𝐑::RegressionData, v;
     kernel=:Epanechnikov,
