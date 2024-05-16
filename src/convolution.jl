@@ -169,6 +169,7 @@ end
 
 gridsteps(kernel) = ntuple(i -> (size(kernel, i)-1)÷2, ndims(kernel))
 gridsteps(kernels::NTuple{N, T}) where {N, T} = gridsteps(first(kernels))
+gridsteps(kernels::Vector{Array{T, N}}) where {T, N} = gridsteps(first(kernels))
 gridsteps(C::ConvolutionData) = gridsteps(first(C.kernels))
 
 function convolve!(C, A, B)
