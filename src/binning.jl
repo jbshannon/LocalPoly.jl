@@ -243,15 +243,32 @@ function linear_binning!(
     return grid
 end
 
+function linear_binning!(
+    grid::GridData{T, N, R},
+    X::Vector{SVector{N, T}},
+    y,
+) where {T, N, R}
+    @unpack g = grid
+    power_combinations = Base.splat(Iterators.product)(0:1 for _ in 1:N)
+    ts = vec(collect(power_combinations))
+    gmin = minimum.(g)
+    δ = step.(g)
+    for i in eachindex(y)
+        _linear_binning!(grid, X[i], y[i], gmin, δ, ts)
+    end
+    return grid
+end
+
 function _linear_binning!(grid::GridData{T, N, R}, X, y, gmin, δ, ts) where {T, N, R}
     @unpack g, c, d = grid
+    IL = last(CartesianIndices(c))
     L = ntuple(j -> togridindex(X[j], gmin[j], δ[j]), N)
     𝓁 = ntuple(j -> floor(Int, L[j]), N)
     r = ntuple(j -> 1 - (L[j] - 𝓁[j]), N)
     w = ntuple(j -> prod(k -> ts[j][k] == 0 ? r[k] : 1-r[k], 1:N), 2^N)
 
     for j in 1:2^N
-        I = CartesianIndex(𝓁) + CartesianIndex(ts[j])
+        I = min(CartesianIndex(𝓁) + CartesianIndex(ts[j]), IL)
         c[I] += w[j]
         d[I] += w[j] * y
     end
